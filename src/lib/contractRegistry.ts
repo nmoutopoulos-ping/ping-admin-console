@@ -21,7 +21,7 @@ export const TRACKED_CONTRACTS: TrackedContract[] = [
   {
     id: "WYUSD",
     label: "Wyoming USD (WYUSD)",
-    address: "0xdc2321323ceff7cb9c9853c463538de0e9450f08",
+    address: "0xd5dE8F5c84A4B7B6cC070827FeDE6F7D504f3844",
     type: "fiat",
     decimals: 18,
     abi: ERC20_ABI,
