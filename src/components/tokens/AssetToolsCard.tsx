@@ -7,8 +7,9 @@ import {
   getContractOwner,
   transferOwnership,
   renounceOwnership,
-  getHoldersWithBalance,
+  getHoldersWithBalances,
   isValidAddress,
+  HoldersResult,
 } from "@/lib/onchain";
 import {
   Coins,
@@ -105,7 +106,7 @@ export function AssetToolsCard({ contract, isWalletConnected }: AssetToolsCardPr
   const [ownershipState, setOwnershipState] = useState<TxState>(initialTxState);
 
   // Holders
-  const [holders, setHolders] = useState<string[]>([]);
+  const [holders, setHolders] = useState<HoldersResult | null>(null);
   const [holdersState, setHoldersState] = useState<TxState>(initialTxState);
 
   const executeAction = useCallback(
@@ -204,9 +205,9 @@ export function AssetToolsCard({ contract, isWalletConnected }: AssetToolsCardPr
 
   const handleGetHolders = () => {
     if (!contract) return;
-    setHolders([]);
+    setHolders(null);
     executeAction(
-      () => getHoldersWithBalance(contract.id),
+      () => getHoldersWithBalances(contract.id),
       setHoldersState,
       (result) => {
         setHolders(result);
@@ -295,17 +296,18 @@ export function AssetToolsCard({ contract, isWalletConnected }: AssetToolsCardPr
             {holdersState.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Holders"}
           </Button>
           <TxResult state={holdersState} />
-          {holders.length > 0 && (
-            <div className="max-h-24 overflow-y-auto space-y-1">
-              {holders.map((addr, i) => (
-                <div key={i} className="p-1.5 bg-primary/5 border border-primary/20 rounded text-xs font-mono break-all">
-                  {addr}
+          {holders && holders.addresses.length > 0 && (
+            <div className="max-h-32 overflow-y-auto space-y-1">
+              {holders.addresses.map((addr, i) => (
+                <div key={i} className="p-1.5 bg-primary/5 border border-primary/20 rounded text-xs font-mono flex justify-between gap-2">
+                  <span className="truncate">{addr.slice(0, 8)}...{addr.slice(-6)}</span>
+                  <span className="text-primary font-medium">{holders.balances[i]}</span>
                 </div>
               ))}
             </div>
           )}
-          {holders.length === 0 && !holdersState.loading && !holdersState.error && (
-            <p className="text-xs text-muted-foreground text-center">No data yet</p>
+          {(!holders || holders.addresses.length === 0) && !holdersState.loading && !holdersState.error && (
+            <p className="text-xs text-muted-foreground text-center">No holders yet</p>
           )}
         </div>
       </div>
