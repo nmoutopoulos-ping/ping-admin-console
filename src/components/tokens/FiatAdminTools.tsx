@@ -511,68 +511,27 @@ export function FiatAdminTools({ contract, isWalletConnected }: FiatAdminToolsPr
         </TabsContent>
 
         <TabsContent value="ownership" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Get Owner */}
-            <div className="space-y-2 p-3 bg-secondary/20 rounded-lg">
-              <div className="flex items-center gap-2 text-sm font-medium mb-2">
-                <Crown className="w-3.5 h-3.5 text-yellow-500" />
-                Contract Owner
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleGetOwner}
-                disabled={ownerState.loading}
-                className="w-full"
-              >
-                {ownerState.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Owner"}
-              </Button>
-              <TxResult state={ownerState} />
-              {owner && (
-                <div className="p-2 bg-primary/5 border border-primary/20 rounded">
-                  <span className="font-mono text-xs text-primary break-all">{owner}</span>
-                </div>
-              )}
+          {/* Get Owner */}
+          <div className="space-y-2 p-3 bg-secondary/20 rounded-lg max-w-md">
+            <div className="flex items-center gap-2 text-sm font-medium mb-2">
+              <Crown className="w-3.5 h-3.5 text-yellow-500" />
+              Contract Owner
             </div>
-
-            {/* Transfer Ownership */}
-            <div className="space-y-2 p-3 bg-secondary/20 rounded-lg">
-              <div className="flex items-center gap-2 text-sm font-medium mb-2">
-                <Crown className="w-3.5 h-3.5 text-accent" />
-                Transfer Ownership
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleGetOwner}
+              disabled={ownerState.loading}
+              className="w-full"
+            >
+              {ownerState.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Owner"}
+            </Button>
+            <TxResult state={ownerState} />
+            {owner && (
+              <div className="p-2 bg-primary/5 border border-primary/20 rounded">
+                <span className="font-mono text-xs text-primary break-all">{owner}</span>
               </div>
-              <AdminInput placeholder="New Owner (0x...)" value={newOwner} onChange={setNewOwner} />
-              <Button
-                size="sm"
-                onClick={handleTransferOwnership}
-                disabled={transferOwnerState.loading || !newOwner}
-                className="w-full"
-              >
-                {transferOwnerState.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Transfer Ownership"}
-              </Button>
-              <TxResult state={transferOwnerState} />
-            </div>
-
-            {/* Renounce Ownership */}
-            <div className="space-y-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg md:col-span-2">
-              <div className="flex items-center gap-2 text-sm font-medium mb-2">
-                <UserX className="w-3.5 h-3.5 text-destructive" />
-                Renounce Ownership
-              </div>
-              <p className="text-xs text-muted-foreground mb-2">
-                Warning: This permanently removes your ability to manage this contract!
-              </p>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleRenounceOwnership}
-                disabled={renounceState.loading}
-                className="w-full"
-              >
-                {renounceState.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Renounce Ownership"}
-              </Button>
-              <TxResult state={renounceState} />
-            </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>
