@@ -233,40 +233,37 @@ export async function getHolders(contractId: string): Promise<string[]> {
   const meta = getTrackedContract(contractId);
   const contract = new ethers.Contract(meta.address, meta.abi, signer);
 
+  console.log("Attempting to get holders for:", {
+    contractId,
+    address: meta.address,
+  });
+
+  // Try holdersWithBalance first, then fall back to holders
   try {
-    return await contract.holders();
-  } catch (err) {
-    console.warn("holders() function not available on contract:", err);
-    throw new Error("This contract does not support the holders() function. The contract may not have this feature implemented.");
+    console.log("Trying holdersWithBalance()...");
+    const result = await contract.holdersWithBalance();
+    console.log("holdersWithBalance result:", result);
+    return result;
+  } catch (err1: any) {
+    console.log("holdersWithBalance failed, trying holders()...", err1?.message);
+    
+    try {
+      const result = await contract.holders();
+      console.log("holders result:", result);
+      return result;
+    } catch (err2: any) {
+      console.error("Both holder functions failed:", {
+        holdersWithBalance: err1?.message,
+        holders: err2?.message,
+      });
+      throw new Error("Could not fetch holders. The contract may require owner permissions or the function is not available.");
+    }
   }
 }
 
 export async function getHoldersWithBalance(contractId: string): Promise<string[]> {
-  const signer = await getSigner();
-  const meta = getTrackedContract(contractId);
-  
-  console.log("Calling holdersWithBalance on:", {
-    contractId,
-    address: meta.address,
-    network: await signer.provider?.getNetwork(),
-  });
-  
-  const contract = new ethers.Contract(meta.address, meta.abi, signer);
-
-  try {
-    const result = await contract.holdersWithBalance();
-    console.log("holdersWithBalance result:", result);
-    return result;
-  } catch (err: any) {
-    console.error("holdersWithBalance() error details:", {
-      message: err?.message,
-      code: err?.code,
-      data: err?.data,
-      reason: err?.reason,
-      fullError: err,
-    });
-    throw new Error("This contract does not support the holdersWithBalance() function. The contract may not have this feature implemented.");
-  }
+  // Alias for getHolders - tries both methods
+  return getHolders(contractId);
 }
 
 export function shortenAddress(address: string): string {
