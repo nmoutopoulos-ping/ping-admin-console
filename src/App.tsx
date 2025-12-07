@@ -2,9 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
-import TokensPage from "./pages/TokensPage";
+import FiatTokensPage from "./pages/FiatTokensPage";
+import AssetTokensPage from "./pages/AssetTokensPage";
 import RequestsPage from "./pages/RequestsPage";
 import NotFound from "./pages/NotFound";
 
@@ -23,7 +24,9 @@ const App = () => (
       >
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/tokens" element={<TokensPage />} />
+          <Route path="/fiat-tokens" element={<FiatTokensPage />} />
+          <Route path="/asset-tokens" element={<AssetTokensPage />} />
+          <Route path="/tokens" element={<Navigate to="/fiat-tokens" replace />} />
           <Route path="/requests" element={<RequestsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
