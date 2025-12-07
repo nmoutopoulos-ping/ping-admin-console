@@ -3,7 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { WalletBar } from "@/components/tokens/WalletBar";
 import { TokenSelector } from "@/components/tokens/TokenSelector";
 import { TokenInfoCard } from "@/components/tokens/TokenInfoCard";
-import { AdminToolsTabs } from "@/components/tokens/AdminToolsTabs";
+import { FiatAdminTools } from "@/components/tokens/FiatAdminTools";
 import { TrackedContract } from "@/lib/contractRegistry";
 import { WalletInfo } from "@/lib/onchain";
 import { useContracts } from "@/hooks/useContracts";
@@ -73,7 +73,7 @@ export default function FiatTokensPage() {
             {/* Token Info + Admin Tools */}
             <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
               <TokenInfoCard contract={selectedContract} isWalletConnected={!!wallet} />
-              <AdminToolsTabs contract={selectedContract} isWalletConnected={!!wallet} />
+              <FiatAdminTools contract={selectedContract} isWalletConnected={!!wallet} />
             </div>
 
             {/* Footer hint */}

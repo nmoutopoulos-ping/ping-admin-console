@@ -7,7 +7,7 @@ export type TrackedContract = {
   abi: string[];
 };
 
-// Generic ERC20-style ABI
+// Full ERC20 ABI for fiat tokens (includes mint, burn, ownership)
 export const ERC20_ABI: string[] = [
   "function name() view returns (string)",
   "function symbol() view returns (string)",
@@ -15,6 +15,14 @@ export const ERC20_ABI: string[] = [
   "function totalSupply() view returns (uint256)",
   "function balanceOf(address owner) view returns (uint256)",
   "function transfer(address to, uint256 amount) returns (bool)",
+  "function approve(address spender, uint256 value) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function transferFrom(address from, address to, uint256 value) returns (bool)",
+  "function mint(address to, uint256 amount)",
+  "function burn(address from, uint256 amount)",
+  "function owner() view returns (address)",
+  "function transferOwnership(address newOwner)",
+  "function renounceOwnership()",
 ];
 
 // Extended ABI for asset tokens with mint/burn/ownership
