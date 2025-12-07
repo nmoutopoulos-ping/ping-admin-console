@@ -15,7 +15,7 @@ import {
 const navItems = [
   { title: "Fiat Tokens", url: "/fiat-tokens", icon: Banknote },
   { title: "Asset Tokens", url: "/asset-tokens", icon: Building2 },
-  { title: "Inbound Requests", url: "/requests", icon: Inbox },
+  { title: "Requests", url: "/requests", icon: Inbox },
 ];
 
 export function AppSidebar() {
