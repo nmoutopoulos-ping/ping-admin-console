@@ -114,6 +114,136 @@ export async function transferTokens(
   return { txHash: receipt?.hash ?? tx.hash };
 }
 
+// Asset token functions
+export async function mintTokens(
+  contractId: string,
+  to: string,
+  amountHuman: string
+): Promise<TransferResult> {
+  const signer = await getSigner();
+  const meta = getTrackedContract(contractId);
+  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+
+  const amount = ethers.parseUnits(amountHuman, meta.decimals);
+  const tx = await contract.mint(to, amount);
+  const receipt = await tx.wait();
+
+  return { txHash: receipt?.hash ?? tx.hash };
+}
+
+export async function burnTokens(
+  contractId: string,
+  from: string,
+  amountHuman: string
+): Promise<TransferResult> {
+  const signer = await getSigner();
+  const meta = getTrackedContract(contractId);
+  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+
+  const amount = ethers.parseUnits(amountHuman, meta.decimals);
+  const tx = await contract.burn(from, amount);
+  const receipt = await tx.wait();
+
+  return { txHash: receipt?.hash ?? tx.hash };
+}
+
+export async function approveTokens(
+  contractId: string,
+  spender: string,
+  amountHuman: string
+): Promise<TransferResult> {
+  const signer = await getSigner();
+  const meta = getTrackedContract(contractId);
+  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+
+  const amount = ethers.parseUnits(amountHuman, meta.decimals);
+  const tx = await contract.approve(spender, amount);
+  const receipt = await tx.wait();
+
+  return { txHash: receipt?.hash ?? tx.hash };
+}
+
+export async function getAllowance(
+  contractId: string,
+  owner: string,
+  spender: string
+): Promise<BalanceResult> {
+  const signer = await getSigner();
+  const meta = getTrackedContract(contractId);
+  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+
+  const allowance = await contract.allowance(owner, spender);
+  const formatted = ethers.formatUnits(allowance, meta.decimals);
+
+  return { raw: allowance.toString(), formatted };
+}
+
+export async function transferFromTokens(
+  contractId: string,
+  from: string,
+  to: string,
+  amountHuman: string
+): Promise<TransferResult> {
+  const signer = await getSigner();
+  const meta = getTrackedContract(contractId);
+  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+
+  const amount = ethers.parseUnits(amountHuman, meta.decimals);
+  const tx = await contract.transferFrom(from, to, amount);
+  const receipt = await tx.wait();
+
+  return { txHash: receipt?.hash ?? tx.hash };
+}
+
+export async function getContractOwner(contractId: string): Promise<string> {
+  const signer = await getSigner();
+  const meta = getTrackedContract(contractId);
+  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+
+  return contract.owner();
+}
+
+export async function transferOwnership(
+  contractId: string,
+  newOwner: string
+): Promise<TransferResult> {
+  const signer = await getSigner();
+  const meta = getTrackedContract(contractId);
+  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+
+  const tx = await contract.transferOwnership(newOwner);
+  const receipt = await tx.wait();
+
+  return { txHash: receipt?.hash ?? tx.hash };
+}
+
+export async function renounceOwnership(contractId: string): Promise<TransferResult> {
+  const signer = await getSigner();
+  const meta = getTrackedContract(contractId);
+  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+
+  const tx = await contract.renounceOwnership();
+  const receipt = await tx.wait();
+
+  return { txHash: receipt?.hash ?? tx.hash };
+}
+
+export async function getHolders(contractId: string): Promise<string[]> {
+  const signer = await getSigner();
+  const meta = getTrackedContract(contractId);
+  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+
+  return contract.holders();
+}
+
+export async function getHoldersWithBalance(contractId: string): Promise<string[]> {
+  const signer = await getSigner();
+  const meta = getTrackedContract(contractId);
+  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+
+  return contract.holdersWithBalance();
+}
+
 export function shortenAddress(address: string): string {
   if (!address) return "";
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
