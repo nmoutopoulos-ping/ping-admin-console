@@ -228,42 +228,52 @@ export async function renounceOwnership(contractId: string): Promise<TransferRes
   return { txHash: receipt?.hash ?? tx.hash };
 }
 
+export type HoldersResult = {
+  addresses: string[];
+  balances: string[];
+};
+
 export async function getHolders(contractId: string): Promise<string[]> {
   const signer = await getSigner();
   const meta = getTrackedContract(contractId);
   const contract = new ethers.Contract(meta.address, meta.abi, signer);
 
-  console.log("Attempting to get holders for:", {
-    contractId,
-    address: meta.address,
-  });
+  console.log("Getting holders for:", meta.address);
 
-  // Try holdersWithBalance first, then fall back to holders
   try {
-    console.log("Trying holdersWithBalance()...");
-    const result = await contract.holdersWithBalance();
-    console.log("holdersWithBalance result:", result);
+    const result = await contract.holders();
+    console.log("holders() result:", result);
     return result;
-  } catch (err1: any) {
-    console.log("holdersWithBalance failed, trying holders()...", err1?.message);
-    
-    try {
-      const result = await contract.holders();
-      console.log("holders result:", result);
-      return result;
-    } catch (err2: any) {
-      console.error("Both holder functions failed:", {
-        holdersWithBalance: err1?.message,
-        holders: err2?.message,
-      });
-      throw new Error("Could not fetch holders. The contract may require owner permissions or the function is not available.");
-    }
+  } catch (err: any) {
+    console.error("holders() failed:", err?.message);
+    throw new Error("Could not fetch holders. Check contract permissions.");
   }
 }
 
+export async function getHoldersWithBalances(contractId: string): Promise<HoldersResult> {
+  const signer = await getSigner();
+  const meta = getTrackedContract(contractId);
+  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+
+  console.log("Getting holdersWithBalances for:", meta.address);
+
+  try {
+    const [addresses, balances] = await contract.holdersWithBalances();
+    console.log("holdersWithBalances() result:", { addresses, balances });
+    return {
+      addresses: addresses as string[],
+      balances: (balances as bigint[]).map(b => b.toString()),
+    };
+  } catch (err: any) {
+    console.error("holdersWithBalances() failed:", err?.message);
+    throw new Error("Could not fetch holders with balances. Check contract permissions.");
+  }
+}
+
+// Backwards compatibility alias
 export async function getHoldersWithBalance(contractId: string): Promise<string[]> {
-  // Alias for getHolders - tries both methods
-  return getHolders(contractId);
+  const result = await getHoldersWithBalances(contractId);
+  return result.addresses;
 }
 
 export function shortenAddress(address: string): string {
