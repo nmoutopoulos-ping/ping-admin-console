@@ -45,7 +45,7 @@ export const TRACKED_CONTRACTS: TrackedContract[] = [
   {
     id: "1315TH",
     label: "1315th Avenue",
-    address: "0x...1315TH_ADDRESS_HERE",
+    address: "0x1E66c3BB1C7d2050965023eef6fbd5d81A5511Ea",
     type: "asset",
     decimals: 0,
     abi: ERC20_ABI,
@@ -53,7 +53,7 @@ export const TRACKED_CONTRACTS: TrackedContract[] = [
   {
     id: "19ORCHARD",
     label: "19 Orchard Court",
-    address: "0x1E66c3BB1C7d2050965023eef6fbd5d81A5511Ea",
+    address: "0x6F45682A8bf304eBB94a384FD07E21f484de40e5",
     type: "asset",
     decimals: 0,
     abi: ERC20_ABI,
