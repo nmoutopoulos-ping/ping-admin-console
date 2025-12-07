@@ -1,4 +1,4 @@
-import { TRACKED_CONTRACTS, TrackedContract } from "@/lib/contractRegistry";
+import { TrackedContract } from "@/lib/contractRegistry";
 import { shortenAddress } from "@/lib/onchain";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
@@ -11,17 +11,18 @@ import {
 } from "@/components/ui/select";
 
 interface TokenSelectorProps {
+  contracts: TrackedContract[];
   selectedContract: TrackedContract | null;
   onSelect: (contract: TrackedContract) => void;
 }
 
-export function TokenSelector({ selectedContract, onSelect }: TokenSelectorProps) {
+export function TokenSelector({ contracts, selectedContract, onSelect }: TokenSelectorProps) {
   const [copied, setCopied] = useState(false);
-  const fiatContracts = TRACKED_CONTRACTS.filter((c) => c.type === "fiat");
-  const assetContracts = TRACKED_CONTRACTS.filter((c) => c.type === "asset");
+  const fiatContracts = contracts.filter((c) => c.type === "fiat");
+  const assetContracts = contracts.filter((c) => c.type === "asset");
 
   const handleChange = (id: string) => {
-    const contract = TRACKED_CONTRACTS.find((c) => c.id === id);
+    const contract = contracts.find((c) => c.id === id);
     if (contract) {
       onSelect(contract);
     }
