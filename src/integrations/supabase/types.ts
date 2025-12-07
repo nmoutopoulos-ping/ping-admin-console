@@ -14,7 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      smart_contracts: {
+        Row: {
+          address: string
+          chain_id: number
+          created_at: string
+          decimals: number
+          id: string
+          label: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          chain_id?: number
+          created_at?: string
+          decimals?: number
+          id: string
+          label: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          chain_id?: number
+          created_at?: string
+          decimals?: number
+          id?: string
+          label?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
