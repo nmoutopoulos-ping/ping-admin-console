@@ -3,7 +3,6 @@ import { WalletConnection } from "@/components/WalletConnection";
 import { ContractSelector } from "@/components/ContractSelector";
 import { TokenInfo } from "@/components/TokenInfo";
 import { AdminTools } from "@/components/AdminTools";
-import { AssetAdminTools } from "@/components/AssetAdminTools";
 import { TrackedContract, TRACKED_CONTRACTS } from "@/lib/contractRegistry";
 import { WalletInfo } from "@/lib/onchain";
 import { Zap } from "lucide-react";
@@ -51,11 +50,6 @@ const Index = () => {
           />
           
           <AdminTools
-            contract={selectedContract}
-            isWalletConnected={!!wallet}
-          />
-          
-          <AssetAdminTools
             contract={selectedContract}
             isWalletConnected={!!wallet}
           />
