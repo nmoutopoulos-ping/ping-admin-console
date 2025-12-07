@@ -244,12 +244,27 @@ export async function getHolders(contractId: string): Promise<string[]> {
 export async function getHoldersWithBalance(contractId: string): Promise<string[]> {
   const signer = await getSigner();
   const meta = getTrackedContract(contractId);
+  
+  console.log("Calling holdersWithBalance on:", {
+    contractId,
+    address: meta.address,
+    network: await signer.provider?.getNetwork(),
+  });
+  
   const contract = new ethers.Contract(meta.address, meta.abi, signer);
 
   try {
-    return await contract.holdersWithBalance();
-  } catch (err) {
-    console.warn("holdersWithBalance() function not available on contract:", err);
+    const result = await contract.holdersWithBalance();
+    console.log("holdersWithBalance result:", result);
+    return result;
+  } catch (err: any) {
+    console.error("holdersWithBalance() error details:", {
+      message: err?.message,
+      code: err?.code,
+      data: err?.data,
+      reason: err?.reason,
+      fullError: err,
+    });
     throw new Error("This contract does not support the holdersWithBalance() function. The contract may not have this feature implemented.");
   }
 }
