@@ -7,7 +7,7 @@ export type TrackedContract = {
   abi: string[];
 };
 
-// Generic ERC20-style ABI; adjust/extend as needed
+// Generic ERC20-style ABI
 export const ERC20_ABI: string[] = [
   "function name() view returns (string)",
   "function symbol() view returns (string)",
@@ -15,6 +15,23 @@ export const ERC20_ABI: string[] = [
   "function totalSupply() view returns (uint256)",
   "function balanceOf(address owner) view returns (uint256)",
   "function transfer(address to, uint256 amount) returns (bool)",
+];
+
+// Extended ABI for asset tokens with mint/burn/ownership
+export const ASSET_TOKEN_ABI: string[] = [
+  ...ERC20_ABI,
+  "function mint(address to, uint256 amount)",
+  "function burn(address from, uint256 amount)",
+  "function approve(address spender, uint256 value) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function transferFrom(address from, address to, uint256 value) returns (bool)",
+  "function owner() view returns (address)",
+  "function transferOwnership(address newOwner)",
+  "function renounceOwnership()",
+  "function holders() view returns (address[])",
+  "function holdersWithBalance() view returns (address[])",
+  "function INITIAL_SUPPLY() view returns (uint256)",
+  "function MAX_SUPPLY() view returns (uint256)",
 ];
 
 export const TRACKED_CONTRACTS: TrackedContract[] = [
@@ -48,7 +65,7 @@ export const TRACKED_CONTRACTS: TrackedContract[] = [
     address: "0x1E66c3BB1C7d2050965023eef6fbd5d81A5511Ea",
     type: "asset",
     decimals: 0,
-    abi: ERC20_ABI,
+    abi: ASSET_TOKEN_ABI,
   },
   {
     id: "19ORCHARD",
@@ -56,7 +73,7 @@ export const TRACKED_CONTRACTS: TrackedContract[] = [
     address: "0x6F45682A8bf304eBB94a384FD07E21f484de40e5",
     type: "asset",
     decimals: 0,
-    abi: ERC20_ABI,
+    abi: ASSET_TOKEN_ABI,
   },
   {
     id: "24WILLOW",
@@ -64,7 +81,7 @@ export const TRACKED_CONTRACTS: TrackedContract[] = [
     address: "0x6BDA01CC7CE813940aDEdbB816BF05703c684Bb8",
     type: "asset",
     decimals: 0,
-    abi: ERC20_ABI,
+    abi: ASSET_TOKEN_ABI,
   },
   {
     id: "500MAPLE",
@@ -72,7 +89,7 @@ export const TRACKED_CONTRACTS: TrackedContract[] = [
     address: "0x0c61795382aa3CAb74C57B41F0Fc3fb1c96ea54F",
     type: "asset",
     decimals: 0,
-    abi: ERC20_ABI,
+    abi: ASSET_TOKEN_ABI,
   },
   {
     id: "88HARBOR",
@@ -80,7 +97,7 @@ export const TRACKED_CONTRACTS: TrackedContract[] = [
     address: "0xb7d8F5032e6499CD34E5E6AD6f69Ebe95992B1d0",
     type: "asset",
     decimals: 0,
-    abi: ERC20_ABI,
+    abi: ASSET_TOKEN_ABI,
   },
 ];
 
