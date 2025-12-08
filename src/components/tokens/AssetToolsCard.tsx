@@ -4,18 +4,14 @@ import { TrackedContract, EXPLORER_BASE_URL } from "@/lib/contractRegistry";
 import {
   mintTokens,
   burnTokens,
-  getContractOwner,
   transferOwnership,
   renounceOwnership,
-  getHoldersWithBalances,
   isValidAddress,
-  HoldersResult,
 } from "@/lib/onchain";
 import {
   Coins,
   Flame,
   Crown,
-  Users,
   Loader2,
   AlertCircle,
   CheckCircle,
@@ -46,7 +42,7 @@ function TxResult({ state }: { state: TxState }) {
   }
   if (state.success) {
     return (
-      <div className="p-2 bg-primary/5 border border-primary/20 rounded space-y-1">
+      <div className="p-2 bg-primary/10 border border-primary/20 rounded space-y-1">
         <div className="flex items-center gap-2 text-primary text-xs">
           <CheckCircle className="w-3 h-3" />
           <span className="font-medium">Success</span>
@@ -65,7 +61,7 @@ function TxResult({ state }: { state: TxState }) {
   return null;
 }
 
-function AdminInput({
+function ToolInput({
   placeholder,
   value,
   onChange,
@@ -80,7 +76,7 @@ function AdminInput({
       placeholder={placeholder}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="console-input w-full text-sm"
+      className="w-full bg-secondary/50 border border-border/50 rounded-md px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
     />
   );
 }
@@ -100,14 +96,8 @@ export function AssetToolsCard({ contract, isWalletConnected }: AssetToolsCardPr
   const [burnState, setBurnState] = useState<TxState>(initialTxState);
 
   // Ownership
-  const [ownerAddress, setOwnerAddress] = useState<string | null>(null);
-  const [ownerLoading, setOwnerLoading] = useState(false);
   const [newOwner, setNewOwner] = useState("");
   const [ownershipState, setOwnershipState] = useState<TxState>(initialTxState);
-
-  // Holders
-  const [holders, setHolders] = useState<HoldersResult | null>(null);
-  const [holdersState, setHoldersState] = useState<TxState>(initialTxState);
 
   const executeAction = useCallback(
     async <T,>(
@@ -160,19 +150,6 @@ export function AssetToolsCard({ contract, isWalletConnected }: AssetToolsCardPr
     );
   };
 
-  const handleGetOwner = async () => {
-    if (!contract) return;
-    setOwnerLoading(true);
-    try {
-      const owner = await getContractOwner(contract.id);
-      setOwnerAddress(owner);
-    } catch {
-      setOwnerAddress(null);
-    } finally {
-      setOwnerLoading(false);
-    }
-  };
-
   const handleTransferOwnership = () => {
     if (!contract || !newOwner) return;
     if (!isValidAddress(newOwner)) {
@@ -185,7 +162,6 @@ export function AssetToolsCard({ contract, isWalletConnected }: AssetToolsCardPr
       (result) => {
         setOwnershipState({ loading: false, error: null, success: result.txHash });
         setNewOwner("");
-        setOwnerAddress(null);
       }
     );
   };
@@ -196,119 +172,86 @@ export function AssetToolsCard({ contract, isWalletConnected }: AssetToolsCardPr
     executeAction(
       () => renounceOwnership(contract.id),
       setOwnershipState,
-      (result) => {
-        setOwnershipState({ loading: false, error: null, success: result.txHash });
-        setOwnerAddress(null);
-      }
-    );
-  };
-
-  const handleGetHolders = () => {
-    if (!contract) return;
-    setHolders(null);
-    executeAction(
-      () => getHoldersWithBalances(contract.id),
-      setHoldersState,
-      (result) => {
-        setHolders(result);
-        setHoldersState(initialTxState);
-      }
+      (result) => setOwnershipState({ loading: false, error: null, success: result.txHash })
     );
   };
 
   if (isDisabled) {
-    if (!isAsset && contract) {
-      return null; // Hide for non-asset tokens
-    }
-    return (
-      <div className="console-card">
-        <h3 className="font-medium mb-2">Asset Token Tools</h3>
-        <p className="text-sm text-muted-foreground">
-          {!contract ? "Select an asset token" : !isWalletConnected ? "Connect wallet first" : "Select an asset token"}
-        </p>
-      </div>
-    );
+    if (!isAsset && contract) return null;
+    return null;
   }
 
   return (
-    <div className="console-card">
-      <h3 className="font-medium mb-4">Asset Token Tools</h3>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="space-y-4">
+      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+        Admin Tools
+      </h3>
+      
+      <div className="grid gap-4 md:grid-cols-3">
         {/* Mint */}
-        <div className="space-y-2 p-3 bg-secondary/20 rounded-lg">
+        <div className="space-y-3 p-4 rounded-lg border border-border/50 bg-secondary/20">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <Coins className="w-3.5 h-3.5 text-green-500" />
-            Mint
+            <Coins className="w-4 h-4 text-green-500" />
+            Mint Tokens
           </div>
-          <AdminInput placeholder="To (0x...)" value={mintTo} onChange={setMintTo} />
-          <AdminInput placeholder="Amount" value={mintAmount} onChange={setMintAmount} />
-          <Button size="sm" onClick={handleMint} disabled={mintState.loading || !mintTo || !mintAmount} className="w-full">
+          <ToolInput placeholder="Recipient (0x...)" value={mintTo} onChange={setMintTo} />
+          <ToolInput placeholder="Amount" value={mintAmount} onChange={setMintAmount} />
+          <Button 
+            size="sm" 
+            onClick={handleMint} 
+            disabled={mintState.loading || !mintTo || !mintAmount} 
+            className="w-full"
+          >
             {mintState.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Mint"}
           </Button>
           <TxResult state={mintState} />
         </div>
 
         {/* Burn */}
-        <div className="space-y-2 p-3 bg-secondary/20 rounded-lg">
+        <div className="space-y-3 p-4 rounded-lg border border-border/50 bg-secondary/20">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <Flame className="w-3.5 h-3.5 text-orange-500" />
-            Burn
+            <Flame className="w-4 h-4 text-orange-500" />
+            Burn Tokens
           </div>
-          <AdminInput placeholder="From (0x...)" value={burnFrom} onChange={setBurnFrom} />
-          <AdminInput placeholder="Amount" value={burnAmount} onChange={setBurnAmount} />
-          <Button variant="destructive" size="sm" onClick={handleBurn} disabled={burnState.loading || !burnFrom || !burnAmount} className="w-full">
+          <ToolInput placeholder="From address (0x...)" value={burnFrom} onChange={setBurnFrom} />
+          <ToolInput placeholder="Amount" value={burnAmount} onChange={setBurnAmount} />
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            onClick={handleBurn} 
+            disabled={burnState.loading || !burnFrom || !burnAmount} 
+            className="w-full"
+          >
             {burnState.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Burn"}
           </Button>
           <TxResult state={burnState} />
         </div>
 
         {/* Ownership */}
-        <div className="space-y-2 p-3 bg-secondary/20 rounded-lg">
+        <div className="space-y-3 p-4 rounded-lg border border-border/50 bg-secondary/20">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <Crown className="w-3.5 h-3.5 text-yellow-500" />
+            <Crown className="w-4 h-4 text-yellow-500" />
             Ownership
           </div>
-          <Button variant="outline" size="sm" onClick={handleGetOwner} disabled={ownerLoading} className="w-full">
-            {ownerLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Owner"}
-          </Button>
-          {ownerAddress && (
-            <div className="p-2 bg-primary/5 border border-primary/20 rounded text-xs font-mono break-all">
-              {ownerAddress}
-            </div>
-          )}
-          <AdminInput placeholder="New owner (0x...)" value={newOwner} onChange={setNewOwner} />
-          <Button size="sm" onClick={handleTransferOwnership} disabled={ownershipState.loading || !newOwner} className="w-full">
+          <ToolInput placeholder="New owner (0x...)" value={newOwner} onChange={setNewOwner} />
+          <Button 
+            size="sm" 
+            onClick={handleTransferOwnership} 
+            disabled={ownershipState.loading || !newOwner} 
+            className="w-full"
+          >
             {ownershipState.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Transfer"}
           </Button>
-          <Button variant="destructive" size="sm" onClick={handleRenounceOwnership} disabled={ownershipState.loading} className="w-full">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRenounceOwnership} 
+            disabled={ownershipState.loading} 
+            className="w-full text-destructive hover:text-destructive"
+          >
             Renounce
           </Button>
           <TxResult state={ownershipState} />
-        </div>
-
-        {/* Holders */}
-        <div className="space-y-2 p-3 bg-secondary/20 rounded-lg">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <Users className="w-3.5 h-3.5 text-primary" />
-            Token Holders
-          </div>
-          <Button variant="outline" size="sm" onClick={handleGetHolders} disabled={holdersState.loading} className="w-full">
-            {holdersState.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Holders"}
-          </Button>
-          <TxResult state={holdersState} />
-          {holders && holders.addresses.length > 0 && (
-            <div className="max-h-32 overflow-y-auto space-y-1">
-              {holders.addresses.map((addr, i) => (
-                <div key={i} className="p-1.5 bg-primary/5 border border-primary/20 rounded text-xs font-mono flex justify-between gap-2">
-                  <span className="truncate">{addr.slice(0, 8)}...{addr.slice(-6)}</span>
-                  <span className="text-primary font-medium">{holders.balances[i]}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {(!holders || holders.addresses.length === 0) && !holdersState.loading && !holdersState.error && (
-            <p className="text-xs text-muted-foreground text-center">No holders yet</p>
-          )}
         </div>
       </div>
     </div>
