@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import { TRACKED_CONTRACTS, TrackedContract } from "./contractRegistry";
+import { supabase } from "@/integrations/supabase/client";
 
 declare global {
   interface Window {
@@ -11,6 +12,33 @@ export type WalletInfo = {
   address: string;
   chainId: number;
 };
+
+// Alchemy RPC helper for read-only operations
+async function alchemyCall(method: string, contractAddress: string, params: Record<string, unknown> = {}) {
+  const { data, error } = await supabase.functions.invoke('alchemy-rpc', {
+    body: { method, contractAddress, params },
+  });
+
+  if (error) throw new Error(error.message || 'Alchemy RPC call failed');
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+// Encode function call data
+function encodeFunctionCall(functionSig: string, params: unknown[] = []): string {
+  const iface = new ethers.Interface([functionSig]);
+  const functionName = functionSig.match(/function (\w+)/)?.[1];
+  if (!functionName) throw new Error('Invalid function signature');
+  return iface.encodeFunctionData(functionName, params);
+}
+
+// Decode function result
+function decodeFunctionResult(functionSig: string, data: string): unknown {
+  const iface = new ethers.Interface([functionSig]);
+  const functionName = functionSig.match(/function (\w+)/)?.[1];
+  if (!functionName) throw new Error('Invalid function signature');
+  return iface.decodeFunctionResult(functionName, data);
+}
 
 export async function connectWallet(): Promise<WalletInfo> {
   if (!window.ethereum) {
@@ -52,24 +80,33 @@ export type TokenInfo = {
   totalSupplyFormatted: string;
 };
 
+// Read-only version using Alchemy (no wallet required)
 export async function readTokenInfo(contractId: string): Promise<TokenInfo> {
-  const signer = await getSigner();
   const meta = getTrackedContract(contractId);
-  const contract = new ethers.Contract(meta.address, meta.abi, signer);
 
-  const [name, symbol, decimals, totalSupply] = await Promise.all([
-    contract.name(),
-    contract.symbol(),
-    contract.decimals(),
-    contract.totalSupply(),
+  const nameSig = "function name() view returns (string)";
+  const symbolSig = "function symbol() view returns (string)";
+  const decimalsSig = "function decimals() view returns (uint8)";
+  const totalSupplySig = "function totalSupply() view returns (uint256)";
+
+  const [nameRes, symbolRes, decimalsRes, supplyRes] = await Promise.all([
+    alchemyCall('eth_call', meta.address, { data: encodeFunctionCall(nameSig) }),
+    alchemyCall('eth_call', meta.address, { data: encodeFunctionCall(symbolSig) }),
+    alchemyCall('eth_call', meta.address, { data: encodeFunctionCall(decimalsSig) }),
+    alchemyCall('eth_call', meta.address, { data: encodeFunctionCall(totalSupplySig) }),
   ]);
+
+  const name = decodeFunctionResult(nameSig, nameRes.result)[0] as string;
+  const symbol = decodeFunctionResult(symbolSig, symbolRes.result)[0] as string;
+  const decimals = Number(decodeFunctionResult(decimalsSig, decimalsRes.result)[0]);
+  const totalSupply = decodeFunctionResult(totalSupplySig, supplyRes.result)[0] as bigint;
 
   const formattedSupply = ethers.formatUnits(totalSupply, decimals);
 
   return {
     name,
     symbol,
-    decimals: Number(decimals),
+    decimals,
     totalSupplyRaw: totalSupply.toString(),
     totalSupplyFormatted: formattedSupply,
   };
@@ -80,15 +117,19 @@ export type BalanceResult = {
   formatted: string;
 };
 
+// Read-only version using Alchemy (no wallet required)
 export async function getTokenBalance(
   contractId: string,
   wallet: string
 ): Promise<BalanceResult> {
-  const signer = await getSigner();
   const meta = getTrackedContract(contractId);
-  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+  const balanceOfSig = "function balanceOf(address) view returns (uint256)";
+  
+  const result = await alchemyCall('eth_call', meta.address, { 
+    data: encodeFunctionCall(balanceOfSig, [wallet]) 
+  });
 
-  const balance = await contract.balanceOf(wallet);
+  const balance = decodeFunctionResult(balanceOfSig, result.result)[0] as bigint;
   const formatted = ethers.formatUnits(balance, meta.decimals);
 
   return { raw: balance.toString(), formatted };
@@ -163,16 +204,20 @@ export async function approveTokens(
   return { txHash: receipt?.hash ?? tx.hash };
 }
 
+// Read-only version using Alchemy (no wallet required)
 export async function getAllowance(
   contractId: string,
   owner: string,
   spender: string
 ): Promise<BalanceResult> {
-  const signer = await getSigner();
   const meta = getTrackedContract(contractId);
-  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+  const allowanceSig = "function allowance(address,address) view returns (uint256)";
+  
+  const result = await alchemyCall('eth_call', meta.address, { 
+    data: encodeFunctionCall(allowanceSig, [owner, spender]) 
+  });
 
-  const allowance = await contract.allowance(owner, spender);
+  const allowance = decodeFunctionResult(allowanceSig, result.result)[0] as bigint;
   const formatted = ethers.formatUnits(allowance, meta.decimals);
 
   return { raw: allowance.toString(), formatted };
@@ -195,12 +240,16 @@ export async function transferFromTokens(
   return { txHash: receipt?.hash ?? tx.hash };
 }
 
+// Read-only version using Alchemy (no wallet required)
 export async function getContractOwner(contractId: string): Promise<string> {
-  const signer = await getSigner();
   const meta = getTrackedContract(contractId);
-  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+  const ownerSig = "function owner() view returns (address)";
+  
+  const result = await alchemyCall('eth_call', meta.address, { 
+    data: encodeFunctionCall(ownerSig) 
+  });
 
-  return contract.owner();
+  return decodeFunctionResult(ownerSig, result.result)[0] as string;
 }
 
 export async function transferOwnership(
@@ -233,39 +282,46 @@ export type HoldersResult = {
   balances: string[];
 };
 
+// Read-only version using Alchemy (no wallet required)
 export async function getHolders(contractId: string): Promise<string[]> {
-  const signer = await getSigner();
   const meta = getTrackedContract(contractId);
-  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+  const holdersSig = "function holders() view returns (address[])";
 
   console.log("Getting holders for:", meta.address);
 
   try {
-    const result = await contract.holders();
-    console.log("holders() result:", result);
-    return result;
-  } catch (err: any) {
-    console.error("holders() failed:", err?.message);
+    const result = await alchemyCall('eth_call', meta.address, { 
+      data: encodeFunctionCall(holdersSig) 
+    });
+    const addresses = decodeFunctionResult(holdersSig, result.result)[0] as string[];
+    console.log("holders() result:", addresses);
+    return addresses;
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error("holders() failed:", message);
     throw new Error("Could not fetch holders. Check contract permissions.");
   }
 }
 
+// Read-only version using Alchemy (no wallet required)
 export async function getHoldersWithBalances(contractId: string): Promise<HoldersResult> {
-  const signer = await getSigner();
   const meta = getTrackedContract(contractId);
-  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+  const holdersSig = "function holdersWithBalances() view returns (address[], uint256[])";
 
   console.log("Getting holdersWithBalances for:", meta.address);
 
   try {
-    const [addresses, balances] = await contract.holdersWithBalances();
+    const result = await alchemyCall('eth_call', meta.address, { 
+      data: encodeFunctionCall(holdersSig) 
+    });
+    const decoded = decodeFunctionResult(holdersSig, result.result);
+    const addresses = decoded[0] as string[];
+    const balances = (decoded[1] as bigint[]).map(b => b.toString());
     console.log("holdersWithBalances() result:", { addresses, balances });
-    return {
-      addresses: addresses as string[],
-      balances: (balances as bigint[]).map(b => b.toString()),
-    };
-  } catch (err: any) {
-    console.error("holdersWithBalances() failed:", err?.message);
+    return { addresses, balances };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error("holdersWithBalances() failed:", message);
     throw new Error("Could not fetch holders with balances. Check contract permissions.");
   }
 }
