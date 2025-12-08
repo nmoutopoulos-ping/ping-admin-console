@@ -1,1 +1,4 @@
 project_id = "putkpinsmfsgrzkzdjxf"
+
+[functions.alchemy-rpc]
+verify_jwt = false
