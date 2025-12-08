@@ -5,6 +5,7 @@ import { TokenSelector } from "@/components/tokens/TokenSelector";
 import { TokenInfoCard } from "@/components/tokens/TokenInfoCard";
 import { AdminToolsTabs } from "@/components/tokens/AdminToolsTabs";
 import { AssetToolsCard } from "@/components/tokens/AssetToolsCard";
+import { HoldersTable } from "@/components/tokens/HoldersTable";
 import { TrackedContract } from "@/lib/contractRegistry";
 import { WalletInfo } from "@/lib/onchain";
 import { useContracts } from "@/hooks/useContracts";
@@ -76,6 +77,9 @@ export default function AssetTokensPage() {
               <TokenInfoCard contract={selectedContract} isWalletConnected={!!wallet} />
               <AdminToolsTabs contract={selectedContract} isWalletConnected={!!wallet} />
             </div>
+
+            {/* Cap Table - Holders with Balances */}
+            <HoldersTable contract={selectedContract} isWalletConnected={!!wallet} />
 
             {/* Asset Token Tools */}
             <AssetToolsCard contract={selectedContract} isWalletConnected={!!wallet} />
