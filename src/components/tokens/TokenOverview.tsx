@@ -154,7 +154,11 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
       {/* Stats Grid */}
       {tokenInfo && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Total Supply" value={tokenInfo.totalSupplyFormatted} highlight />
+          <StatCard 
+            label="Total Supply" 
+            value={`${!isAsset ? "$ " : ""}${parseFloat(tokenInfo.totalSupplyFormatted.replace(/,/g, '')).toLocaleString()}`} 
+            highlight 
+          />
           <StatCard label="Decimals" value={tokenInfo.decimals.toString()} />
           <StatCard label="Holders" value={holders?.addresses.length.toString() || "—"} />
           {owner && (
