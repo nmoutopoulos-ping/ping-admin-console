@@ -8,7 +8,6 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
-  const verifiedWallet = localStorage.getItem("verified_admin_wallet");
 
   if (loading) {
     return (
@@ -18,8 +17,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Must have both email auth AND verified wallet
-  if (!user || !verifiedWallet) {
+  if (!user) {
     return <Navigate to="/auth" replace />;
   }
 
