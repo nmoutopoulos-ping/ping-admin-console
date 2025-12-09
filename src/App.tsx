@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { WalletProvider } from "@/contexts/WalletContext";
 import Index from "./pages/Index";
 import FiatTokensPage from "./pages/FiatTokensPage";
 import AssetTokensPage from "./pages/AssetTokensPage";
@@ -16,24 +17,26 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/fiat-tokens" element={<ProtectedRoute><FiatTokensPage /></ProtectedRoute>} />
-          <Route path="/asset-tokens" element={<ProtectedRoute><AssetTokensPage /></ProtectedRoute>} />
-          <Route path="/tokens" element={<Navigate to="/fiat-tokens" replace />} />
-          <Route path="/requests" element={<ProtectedRoute><RequestsPage /></ProtectedRoute>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <WalletProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/fiat-tokens" element={<ProtectedRoute><FiatTokensPage /></ProtectedRoute>} />
+            <Route path="/asset-tokens" element={<ProtectedRoute><AssetTokensPage /></ProtectedRoute>} />
+            <Route path="/tokens" element={<Navigate to="/fiat-tokens" replace />} />
+            <Route path="/requests" element={<ProtectedRoute><RequestsPage /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </WalletProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
