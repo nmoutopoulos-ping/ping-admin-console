@@ -24,6 +24,7 @@ export function useAuth() {
   }, []);
 
   const signOut = async () => {
+    localStorage.removeItem("verified_admin_wallet");
     await supabase.auth.signOut();
   };
 
