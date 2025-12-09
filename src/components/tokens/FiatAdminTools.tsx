@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrackedContract, EXPLORER_BASE_URL } from "@/lib/contractRegistry";
+import { TrackedContract } from "@/lib/contractRegistry";
 import {
   getTokenBalance,
   transferTokens,
@@ -11,8 +11,6 @@ import {
   mintTokens,
   burnTokens,
   getContractOwner,
-  transferOwnership,
-  renounceOwnership,
   isValidAddress,
   BalanceResult,
 } from "@/lib/onchain";
@@ -22,87 +20,22 @@ import {
   Shield,
   ArrowRightLeft,
   Loader2,
-  AlertCircle,
-  CheckCircle,
-  ExternalLink,
   Settings2,
   Plus,
   Flame,
   Crown,
-  UserX,
 } from "lucide-react";
+import { TxResult, TxState, initialTxState } from "./shared/TxState";
+import { AdminInput } from "./shared/AdminInput";
+import { useContractAction } from "@/hooks/useContractAction";
 
 interface FiatAdminToolsProps {
   contract: TrackedContract | null;
   isWalletConnected: boolean;
 }
 
-type TxState = {
-  loading: boolean;
-  error: string | null;
-  success: string | null;
-};
-
-const initialTxState: TxState = { loading: false, error: null, success: null };
-
-function TxResult({ state }: { state: TxState }) {
-  if (state.error) {
-    return (
-      <div className="flex items-start gap-2 p-2 bg-destructive/10 border border-destructive/30 rounded text-xs text-destructive">
-        <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
-        <span className="break-words">{state.error}</span>
-      </div>
-    );
-  }
-  if (state.success) {
-    return (
-      <div className="p-2 bg-primary/5 border border-primary/20 rounded space-y-1">
-        <div className="flex items-center gap-2 text-primary text-xs">
-          <CheckCircle className="w-3 h-3" />
-          <span className="font-medium">Success</span>
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-mono text-xs break-all">
-            {state.success.slice(0, 10)}...{state.success.slice(-6)}
-          </span>
-          <a
-            href={`${EXPLORER_BASE_URL}/tx/${state.success}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs text-accent hover:underline"
-          >
-            View <ExternalLink className="w-3 h-3" />
-          </a>
-        </div>
-      </div>
-    );
-  }
-  return null;
-}
-
-function AdminInput({
-  placeholder,
-  value,
-  onChange,
-  type = "text",
-}: {
-  placeholder: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-}) {
-  return (
-    <input
-      type={type}
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="console-input w-full text-sm"
-    />
-  );
-}
-
 export function FiatAdminTools({ contract, isWalletConnected }: FiatAdminToolsProps) {
+  const { executeAction } = useContractAction();
   const isDisabled = !contract || !isWalletConnected;
 
   // Balance
@@ -145,36 +78,6 @@ export function FiatAdminTools({ contract, isWalletConnected }: FiatAdminToolsPr
   // Owner
   const [owner, setOwner] = useState<string | null>(null);
   const [ownerState, setOwnerState] = useState<TxState>(initialTxState);
-
-  // Transfer Ownership
-  const [newOwner, setNewOwner] = useState("");
-  const [transferOwnerState, setTransferOwnerState] = useState<TxState>(initialTxState);
-
-  // Renounce
-  const [renounceState, setRenounceState] = useState<TxState>(initialTxState);
-
-  const executeAction = useCallback(
-    async <T,>(
-      action: () => Promise<T>,
-      setState: React.Dispatch<React.SetStateAction<TxState>>,
-      onSuccess?: (result: T) => void,
-      resetFields?: () => void
-    ) => {
-      setState({ loading: true, error: null, success: null });
-      try {
-        const result = await action();
-        if (onSuccess) onSuccess(result);
-        if (resetFields) resetFields();
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Action failed";
-        const simplified = message.includes("execution reverted")
-          ? "Transaction reverted. Check permissions or insufficient balance."
-          : message;
-        setState({ loading: false, error: simplified, success: null });
-      }
-    },
-    []
-  );
 
   const handleCheckBalance = () => {
     if (!contract || !balanceAddress) return;
@@ -290,32 +193,6 @@ export function FiatAdminTools({ contract, isWalletConnected }: FiatAdminToolsPr
         setOwner(result);
         setOwnerState(initialTxState);
       }
-    );
-  };
-
-  const handleTransferOwnership = () => {
-    if (!contract || !newOwner) return;
-    if (!isValidAddress(newOwner)) {
-      setTransferOwnerState({ ...initialTxState, error: "Invalid address" });
-      return;
-    }
-    executeAction(
-      () => transferOwnership(contract.id, newOwner),
-      setTransferOwnerState,
-      (result) => setTransferOwnerState({ loading: false, error: null, success: result.txHash }),
-      () => setNewOwner("")
-    );
-  };
-
-  const handleRenounceOwnership = () => {
-    if (!contract) return;
-    if (!confirm("Are you sure you want to renounce ownership? This action is irreversible!")) {
-      return;
-    }
-    executeAction(
-      () => renounceOwnership(contract.id),
-      setRenounceState,
-      (result) => setRenounceState({ loading: false, error: null, success: result.txHash })
     );
   };
 
@@ -511,7 +388,6 @@ export function FiatAdminTools({ contract, isWalletConnected }: FiatAdminToolsPr
         </TabsContent>
 
         <TabsContent value="ownership" className="space-y-4">
-          {/* Get Owner */}
           <div className="space-y-2 p-3 bg-secondary/20 rounded-lg max-w-md">
             <div className="flex items-center gap-2 text-sm font-medium mb-2">
               <Crown className="w-3.5 h-3.5 text-yellow-500" />

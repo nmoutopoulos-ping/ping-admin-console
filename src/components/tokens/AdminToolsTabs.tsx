@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrackedContract, EXPLORER_BASE_URL } from "@/lib/contractRegistry";
+import { TrackedContract } from "@/lib/contractRegistry";
 import {
   getTokenBalance,
   transferTokens,
@@ -11,87 +11,18 @@ import {
   isValidAddress,
   BalanceResult,
 } from "@/lib/onchain";
-import {
-  Search,
-  Send,
-  Shield,
-  ArrowRightLeft,
-  Loader2,
-  AlertCircle,
-  CheckCircle,
-  ExternalLink,
-  Settings2,
-} from "lucide-react";
+import { Search, Send, Shield, ArrowRightLeft, Loader2, Settings2 } from "lucide-react";
+import { TxResult, TxState, initialTxState } from "./shared/TxState";
+import { AdminInput } from "./shared/AdminInput";
+import { useContractAction } from "@/hooks/useContractAction";
 
 interface AdminToolsTabsProps {
   contract: TrackedContract | null;
   isWalletConnected: boolean;
 }
 
-type TxState = {
-  loading: boolean;
-  error: string | null;
-  success: string | null;
-};
-
-const initialTxState: TxState = { loading: false, error: null, success: null };
-
-function TxResult({ state }: { state: TxState }) {
-  if (state.error) {
-    return (
-      <div className="flex items-start gap-2 p-2 bg-destructive/10 border border-destructive/30 rounded text-xs text-destructive">
-        <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
-        <span className="break-words">{state.error}</span>
-      </div>
-    );
-  }
-  if (state.success) {
-    return (
-      <div className="p-2 bg-primary/5 border border-primary/20 rounded space-y-1">
-        <div className="flex items-center gap-2 text-primary text-xs">
-          <CheckCircle className="w-3 h-3" />
-          <span className="font-medium">Success</span>
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-mono text-xs break-all">
-            {state.success.slice(0, 10)}...{state.success.slice(-6)}
-          </span>
-          <a
-            href={`${EXPLORER_BASE_URL}/tx/${state.success}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs text-accent hover:underline"
-          >
-            View <ExternalLink className="w-3 h-3" />
-          </a>
-        </div>
-      </div>
-    );
-  }
-  return null;
-}
-
-function AdminInput({
-  placeholder,
-  value,
-  onChange,
-}: {
-  placeholder: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <input
-      type="text"
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="console-input w-full text-sm"
-    />
-  );
-}
-
 export function AdminToolsTabs({ contract, isWalletConnected }: AdminToolsTabsProps) {
+  const { executeAction } = useContractAction();
   const isDisabled = !contract || !isWalletConnected;
 
   // Balance
@@ -120,29 +51,6 @@ export function AdminToolsTabs({ contract, isWalletConnected }: AdminToolsTabsPr
   const [tfTo, setTfTo] = useState("");
   const [tfAmount, setTfAmount] = useState("");
   const [tfState, setTfState] = useState<TxState>(initialTxState);
-
-  const executeAction = useCallback(
-    async <T,>(
-      action: () => Promise<T>,
-      setState: React.Dispatch<React.SetStateAction<TxState>>,
-      onSuccess?: (result: T) => void,
-      resetFields?: () => void
-    ) => {
-      setState({ loading: true, error: null, success: null });
-      try {
-        const result = await action();
-        if (onSuccess) onSuccess(result);
-        if (resetFields) resetFields();
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Action failed";
-        const simplified = message.includes("execution reverted")
-          ? "Transaction reverted. Check permissions."
-          : message;
-        setState({ loading: false, error: simplified, success: null });
-      }
-    },
-    []
-  );
 
   const handleCheckBalance = () => {
     if (!contract || !balanceAddress) return;
@@ -286,7 +194,7 @@ export function AdminToolsTabs({ contract, isWalletConnected }: AdminToolsTabsPr
                 Transfer
               </div>
               <AdminInput placeholder="Recipient (0x...)" value={transferTo} onChange={setTransferTo} />
-              <AdminInput placeholder="Amount" value={transferAmount} onChange={setTransferAmount} />
+              <AdminInput placeholder="Amount" value={transferAmount} onChange={setTransferAmount} type="number" />
               <Button
                 size="sm"
                 onClick={handleTransfer}
@@ -306,7 +214,7 @@ export function AdminToolsTabs({ contract, isWalletConnected }: AdminToolsTabsPr
               </div>
               <AdminInput placeholder="From (0x...)" value={tfFrom} onChange={setTfFrom} />
               <AdminInput placeholder="To (0x...)" value={tfTo} onChange={setTfTo} />
-              <AdminInput placeholder="Amount" value={tfAmount} onChange={setTfAmount} />
+              <AdminInput placeholder="Amount" value={tfAmount} onChange={setTfAmount} type="number" />
               <Button
                 size="sm"
                 onClick={handleTransferFrom}
@@ -325,7 +233,7 @@ export function AdminToolsTabs({ contract, isWalletConnected }: AdminToolsTabsPr
                 Approve
               </div>
               <AdminInput placeholder="Spender (0x...)" value={approveSpender} onChange={setApproveSpender} />
-              <AdminInput placeholder="Amount" value={approveAmount} onChange={setApproveAmount} />
+              <AdminInput placeholder="Amount" value={approveAmount} onChange={setApproveAmount} type="number" />
               <Button
                 size="sm"
                 onClick={handleApprove}
