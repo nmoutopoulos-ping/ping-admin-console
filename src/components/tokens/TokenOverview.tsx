@@ -187,8 +187,14 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
               <span className="text-right">Share</span>
             </div>
             <div className="divide-y divide-border/30">
-              {holders.addresses.map((address, index) => {
-                const balance = parseInt(holders.balances[index] || "0");
+              {holders.addresses
+                .map((address, index) => ({
+                  address,
+                  balance: parseInt(holders.balances[index] || "0"),
+                }))
+                .sort((a, b) => b.balance - a.balance)
+                .map((holder, index) => {
+                const { address, balance } = holder;
                 const percentage = totalSupply > 0 ? ((balance / totalSupply) * 100) : 0;
                 const isContractOwner = owner && address.toLowerCase() === owner.toLowerCase();
                 const isCopied = copiedAddress === address;
