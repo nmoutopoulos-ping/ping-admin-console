@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_wallets: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       smart_contracts: {
         Row: {
           address: string
