@@ -36,20 +36,16 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
     setError(null);
     
     try {
-      const promises: Promise<any>[] = [readTokenInfo(contract.id)];
-      
-      if (isAsset) {
-        promises.push(getHoldersWithBalances(contract.id));
-        promises.push(getContractOwner(contract.id));
-      }
+      const promises: Promise<any>[] = [
+        readTokenInfo(contract.id),
+        getHoldersWithBalances(contract.id),
+        getContractOwner(contract.id),
+      ];
 
       const results = await Promise.all(promises);
       setTokenInfo(results[0]);
-      
-      if (isAsset) {
-        setHolders(results[1]);
-        setOwner(results[2]);
-      }
+      setHolders(results[1]);
+      setOwner(results[2]);
       
       setLastUpdated(new Date());
     } catch (err) {
@@ -57,7 +53,7 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
     } finally {
       setLoading(false);
     }
-  }, [contract, isWalletConnected, isAsset]);
+  }, [contract, isWalletConnected]);
 
   useEffect(() => {
     if (canLoad) {
@@ -164,11 +160,11 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
         </div>
       )}
 
-      {/* Cap Table */}
-      {isAsset && holders && holders.addresses.length > 0 && (
+      {/* Holders Table */}
+      {holders && holders.addresses.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-            Cap Table
+            Holders
           </h3>
           <div className="rounded-lg border border-border/50 overflow-hidden">
             <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-2 bg-secondary/30 text-xs text-muted-foreground uppercase tracking-wider">
@@ -240,7 +236,7 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
         </div>
       )}
 
-      {isAsset && holders && holders.addresses.length === 0 && !loading && (
+      {holders && holders.addresses.length === 0 && !loading && (
         <div className="rounded-lg border border-dashed border-border/50 p-8 text-center text-muted-foreground">
           No token holders found
         </div>
