@@ -1,4 +1,4 @@
-import { Zap, Banknote, Building2, Inbox } from "lucide-react";
+import { Zap, Banknote, Building2, Inbox, LogOut } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -10,7 +10,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { title: "Fiat Tokens", url: "/fiat-tokens", icon: Banknote },
@@ -20,6 +23,7 @@ const navItems = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const { user, signOut } = useAuth();
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -65,6 +69,23 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      {user && (
+        <SidebarFooter className="p-4 border-t border-sidebar-border">
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={signOut}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
+        </SidebarFooter>
+      )}
     </Sidebar>
   );
 }
