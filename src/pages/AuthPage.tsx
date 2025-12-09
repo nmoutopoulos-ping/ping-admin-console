@@ -5,36 +5,37 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Zap } from "lucide-react";
+import { Loader2, Zap, Wallet, CheckCircle } from "lucide-react";
 import { z } from "zod";
+import { connectWallet, shortenAddress } from "@/lib/onchain";
 
 const authSchema = z.object({
   email: z.string().trim().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+type AuthStep = "credentials" | "wallet";
+
 export default function AuthPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [step, setStep] = useState<AuthStep>("credentials");
+  const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
+    // Check if already fully authenticated (has session + verified wallet in localStorage)
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const verifiedWallet = localStorage.getItem("verified_admin_wallet");
+      
+      if (session?.user && verifiedWallet) {
         navigate("/fiat-tokens");
       }
-    });
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        navigate("/fiat-tokens");
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    };
+    checkAuth();
   }, [navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -53,38 +54,53 @@ export default function AuthPage() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Signed in successfully");
+      toast.success("Credentials verified. Please connect your wallet.");
+      setStep("wallet");
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const validation = authSchema.safeParse({ email, password });
-    if (!validation.success) {
-      toast.error(validation.error.errors[0].message);
-      return;
-    }
-
+  const handleConnectWallet = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-      },
-    });
-    setLoading(false);
-
-    if (error) {
-      if (error.message.includes("already registered")) {
-        toast.error("This email is already registered. Please sign in.");
-      } else {
-        toast.error(error.message);
+    try {
+      const walletInfo = await connectWallet();
+      setConnectedWallet(walletInfo.address);
+      
+      // Verify wallet is in admin_wallets table
+      const { data: adminWallets, error } = await supabase
+        .from("admin_wallets")
+        .select("wallet_address")
+        .ilike("wallet_address", walletInfo.address);
+      
+      if (error) {
+        throw new Error("Failed to verify wallet");
       }
-    } else {
-      toast.success("Account created! You can now sign in.");
+      
+      if (!adminWallets || adminWallets.length === 0) {
+        // Sign out since wallet is not authorized
+        await supabase.auth.signOut();
+        toast.error("This wallet is not authorized for admin access.");
+        setStep("credentials");
+        setConnectedWallet(null);
+        return;
+      }
+      
+      // Store verified wallet in localStorage
+      localStorage.setItem("verified_admin_wallet", walletInfo.address);
+      toast.success("Wallet verified! Redirecting...");
+      navigate("/fiat-tokens");
+      
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to connect wallet");
+      setConnectedWallet(null);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleCancel = async () => {
+    await supabase.auth.signOut();
+    setStep("credentials");
+    setConnectedWallet(null);
   };
 
   return (
@@ -97,77 +113,83 @@ export default function AuthPage() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold">Ping Admin</CardTitle>
-          <CardDescription>Sign in to access the console</CardDescription>
+          <CardDescription>
+            {step === "credentials" 
+              ? "Sign in to access the console" 
+              : "Connect your authorized wallet"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    placeholder="admin@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+          {step === "credentials" ? (
+            <form onSubmit={handleSignIn} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="signin-email">Email</Label>
+                <Input
+                  id="signin-email"
+                  type="email"
+                  placeholder="admin@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signin-password">Password</Label>
+                <Input
+                  id="signin-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Sign In
+              </Button>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                <CheckCircle className="w-4 h-4 text-primary" />
+                <span className="text-sm text-primary">Email verified</span>
+              </div>
+              
+              {connectedWallet ? (
+                <div className="p-3 bg-secondary rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Connected Wallet</p>
+                  <p className="font-mono text-sm">{shortenAddress(connectedWallet)}</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                  Sign In
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="admin@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                  Create Account
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center">
+                  Connect your MetaMask wallet to verify admin access.
+                </p>
+              )}
+              
+              <Button 
+                onClick={handleConnectWallet} 
+                className="w-full" 
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Wallet className="w-4 h-4 mr-2" />
+                )}
+                {connectedWallet ? "Verifying..." : "Connect Wallet"}
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                onClick={handleCancel} 
+                className="w-full"
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
