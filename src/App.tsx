@@ -7,7 +7,9 @@ import Index from "./pages/Index";
 import FiatTokensPage from "./pages/FiatTokensPage";
 import AssetTokensPage from "./pages/AssetTokensPage";
 import RequestsPage from "./pages/RequestsPage";
+import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -24,10 +26,11 @@ const App = () => (
       >
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/fiat-tokens" element={<FiatTokensPage />} />
-          <Route path="/asset-tokens" element={<AssetTokensPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/fiat-tokens" element={<ProtectedRoute><FiatTokensPage /></ProtectedRoute>} />
+          <Route path="/asset-tokens" element={<ProtectedRoute><AssetTokensPage /></ProtectedRoute>} />
           <Route path="/tokens" element={<Navigate to="/fiat-tokens" replace />} />
-          <Route path="/requests" element={<RequestsPage />} />
+          <Route path="/requests" element={<ProtectedRoute><RequestsPage /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

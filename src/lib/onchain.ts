@@ -46,7 +46,13 @@ export async function connectWallet(): Promise<WalletInfo> {
   }
   
   const provider = new ethers.BrowserProvider(window.ethereum);
-  await provider.send("eth_requestAccounts", []);
+  // This will trigger MetaMask popup and wait for user confirmation
+  const accounts = await provider.send("eth_requestAccounts", []);
+  
+  if (!accounts || accounts.length === 0) {
+    throw new Error("User rejected the connection request.");
+  }
+  
   const signer = await provider.getSigner();
   const address = await signer.getAddress();
   const network = await provider.getNetwork();
@@ -61,8 +67,15 @@ export async function getSigner() {
   if (!window.ethereum) {
     throw new Error("No wallet provider found. Please install MetaMask.");
   }
+  
   const provider = new ethers.BrowserProvider(window.ethereum);
-  await provider.send("eth_requestAccounts", []);
+  // Always request accounts to ensure MetaMask popup appears for confirmation
+  const accounts = await provider.send("eth_requestAccounts", []);
+  
+  if (!accounts || accounts.length === 0) {
+    throw new Error("User rejected the connection request.");
+  }
+  
   return provider.getSigner();
 }
 
