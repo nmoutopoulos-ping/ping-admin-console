@@ -38,14 +38,23 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
     try {
       const promises: Promise<any>[] = [
         readTokenInfo(contract.id),
-        getHoldersWithBalances(contract.id),
         getContractOwner(contract.id),
       ];
+      
+      // Only fetch holders for asset tokens (fiat contracts don't have this function)
+      if (isAsset) {
+        promises.push(getHoldersWithBalances(contract.id));
+      }
 
       const results = await Promise.all(promises);
       setTokenInfo(results[0]);
-      setHolders(results[1]);
-      setOwner(results[2]);
+      setOwner(results[1]);
+      
+      if (isAsset) {
+        setHolders(results[2]);
+      } else {
+        setHolders(null);
+      }
       
       setLastUpdated(new Date());
     } catch (err) {
@@ -53,7 +62,7 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
     } finally {
       setLoading(false);
     }
-  }, [contract, isWalletConnected]);
+  }, [contract, isWalletConnected, isAsset]);
 
   useEffect(() => {
     if (canLoad) {
