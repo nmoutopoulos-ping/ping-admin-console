@@ -1,17 +1,16 @@
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { WalletBar } from "@/components/tokens/WalletBar";
 import { TokenSelector } from "@/components/tokens/TokenSelector";
 import { TokenOverview } from "@/components/tokens/TokenOverview";
 import { AdminToolsTabs } from "@/components/tokens/AdminToolsTabs";
 import { AssetToolsCard } from "@/components/tokens/AssetToolsCard";
 import { TrackedContract } from "@/lib/contractRegistry";
-import { WalletInfo } from "@/lib/onchain";
 import { useContracts } from "@/hooks/useContracts";
+import { useWallet } from "@/contexts/WalletContext";
 import { Loader2 } from "lucide-react";
 
 export default function TokensPage() {
-  const [wallet, setWallet] = useState<WalletInfo | null>(null);
+  const { wallet } = useWallet();
   const [selectedContract, setSelectedContract] = useState<TrackedContract | null>(null);
   const { contracts, loading, error } = useContracts();
 
@@ -24,8 +23,6 @@ export default function TokensPage() {
   return (
     <AppLayout>
       <div className="max-w-5xl mx-auto space-y-8">
-        <WalletBar wallet={wallet} onConnect={setWallet} />
-
         {loading && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
