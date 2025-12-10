@@ -11,9 +11,15 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const navItems = [
   { title: "Fiat Tokens", url: "/fiat-tokens", icon: Banknote },
@@ -24,19 +30,23 @@ const navItems = [
 export function AppSidebar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <Sidebar className="border-r border-sidebar-border bg-sidebar">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="h-14 px-4 flex items-center border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
             <Zap className="w-5 h-5 text-primary" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-gradient-primary">Ping Admin</h1>
-            <p className="text-xs text-muted-foreground">Asset & Fiat Console</p>
-          </div>
+          {!collapsed && (
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-gradient-primary truncate">Ping Admin</h1>
+              <p className="text-xs text-muted-foreground truncate">Asset & Fiat Console</p>
+            </div>
+          )}
         </div>
       </SidebarHeader>
 
@@ -46,23 +56,32 @@ export function AppSidebar() {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    className={`w-full ${
-                      isActive(item.url)
-                        ? "bg-sidebar-accent text-primary"
-                        : "hover:bg-sidebar-accent/50"
-                    }`}
-                  >
-                    <NavLink
-                      to={item.url}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"
-                      activeClassName="bg-sidebar-accent text-primary font-medium"
-                    >
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton
+                        asChild
+                        className={`w-full ${
+                          isActive(item.url)
+                            ? "bg-sidebar-accent text-primary"
+                            : "hover:bg-sidebar-accent/50"
+                        }`}
+                      >
+                        <NavLink
+                          to={item.url}
+                          className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"
+                          activeClassName="bg-sidebar-accent text-primary font-medium"
+                        >
+                          <item.icon className="w-4 h-4 flex-shrink-0" />
+                          {!collapsed && <span className="truncate">{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {collapsed && (
+                      <TooltipContent side="right">
+                        {item.title}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -73,16 +92,27 @@ export function AppSidebar() {
       {user && (
         <SidebarFooter className="p-4 border-t border-sidebar-border">
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={signOut}
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+            {!collapsed && (
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={collapsed ? "w-full p-2" : "w-full"}
+                  onClick={signOut}
+                >
+                  <LogOut className="w-4 h-4 flex-shrink-0" />
+                  {!collapsed && <span className="ml-2">Sign Out</span>}
+                </Button>
+              </TooltipTrigger>
+              {collapsed && (
+                <TooltipContent side="right">
+                  Sign Out
+                </TooltipContent>
+              )}
+            </Tooltip>
           </div>
         </SidebarFooter>
       )}

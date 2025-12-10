@@ -13,7 +13,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <AppSidebar />
         <div className="flex-1 flex flex-col">
           <header className="h-14 flex items-center justify-between border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10 px-4">
-            <SidebarTrigger className="lg:hidden" />
+            <SidebarTrigger />
             <div className="flex-1" />
             <HeaderWallet />
           </header>
