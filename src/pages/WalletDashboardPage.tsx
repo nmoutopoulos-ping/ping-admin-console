@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wallet, Banknote, Building2, RefreshCw, AlertCircle, Check, X } from "lucide-react";
+import { Wallet, Banknote, Building2, RefreshCw, AlertCircle, Check, X, Copy, Globe } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ethers } from "ethers";
 
@@ -243,6 +244,11 @@ function TokenCard({ token }: { token: WalletToken }) {
     return num.toLocaleString(undefined, { maximumFractionDigits: 4 });
   };
 
+  const copyAddress = () => {
+    navigator.clipboard.writeText(token.contractAddress);
+    toast.success("Contract address copied!");
+  };
+
   return (
     <Card className={`hover:shadow-md transition-shadow ${token.isRegistered ? "" : "opacity-75"}`}>
       <CardHeader className="pb-2">
@@ -265,16 +271,34 @@ function TokenCard({ token }: { token: WalletToken }) {
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
         <div className="flex items-baseline gap-2">
           <span className="text-2xl font-bold text-foreground">
             {formatBalance(token.balanceFormatted)}
           </span>
           <span className="text-sm text-muted-foreground">{token.symbol}</span>
         </div>
-        <p className="text-xs text-muted-foreground mt-2 truncate font-mono">
-          {token.contractAddress.slice(0, 10)}...{token.contractAddress.slice(-8)}
-        </p>
+        
+        {/* Network Badge */}
+        <div className="flex items-center gap-1.5">
+          <Globe className="w-3 h-3 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Sepolia Testnet</span>
+        </div>
+        
+        {/* Full Contract Address */}
+        <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
+          <code className="text-xs font-mono text-foreground break-all flex-1 select-all">
+            {token.contractAddress}
+          </code>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0"
+            onClick={copyAddress}
+          >
+            <Copy className="w-3 h-3" />
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
