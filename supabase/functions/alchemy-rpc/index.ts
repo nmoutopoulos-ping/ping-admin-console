@@ -111,26 +111,87 @@ serve(async (req) => {
     }
 
     if (method === 'alchemy_getTokenMetadata') {
-      // Get token metadata (name, symbol, decimals)
-      const response = await fetch(ALCHEMY_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'alchemy_getTokenMetadata',
-          params: [params.contractAddress],
+      // Read token metadata directly from the contract (not Alchemy cache)
+      // This ensures we get the latest on-chain data
+      const tokenAddress = params.contractAddress;
+      
+      // Function selectors for ERC20 standard methods
+      const nameSelector = '0x06fdde03';     // name()
+      const symbolSelector = '0x95d89b41';   // symbol()
+      const decimalsSelector = '0x313ce567'; // decimals()
+      
+      // Make parallel calls to get name, symbol, and decimals
+      const [nameRes, symbolRes, decimalsRes] = await Promise.all([
+        fetch(ALCHEMY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0', id: 1, method: 'eth_call',
+            params: [{ to: tokenAddress, data: nameSelector }, 'latest'],
+          }),
         }),
-      });
+        fetch(ALCHEMY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0', id: 2, method: 'eth_call',
+            params: [{ to: tokenAddress, data: symbolSelector }, 'latest'],
+          }),
+        }),
+        fetch(ALCHEMY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0', id: 3, method: 'eth_call',
+            params: [{ to: tokenAddress, data: decimalsSelector }, 'latest'],
+          }),
+        }),
+      ]);
 
-      const result = await response.json();
-      console.log("alchemy_getTokenMetadata result:", result.result);
+      const [nameData, symbolData, decimalsData] = await Promise.all([
+        nameRes.json(),
+        symbolRes.json(),
+        decimalsRes.json(),
+      ]);
 
-      if (result.error) {
-        throw new Error(result.error.message);
-      }
+      // Decode string from ABI-encoded response
+      const decodeString = (hex: string): string => {
+        if (!hex || hex === '0x') return '';
+        try {
+          // Remove 0x prefix
+          const data = hex.slice(2);
+          // For dynamic string: offset (32 bytes) + length (32 bytes) + data
+          if (data.length >= 128) {
+            const lengthHex = data.slice(64, 128);
+            const length = parseInt(lengthHex, 16);
+            const stringHex = data.slice(128, 128 + length * 2);
+            let result = '';
+            for (let i = 0; i < stringHex.length; i += 2) {
+              result += String.fromCharCode(parseInt(stringHex.slice(i, i + 2), 16));
+            }
+            return result;
+          }
+          // Fallback: try direct hex to string
+          let result = '';
+          for (let i = 0; i < data.length; i += 2) {
+            const charCode = parseInt(data.slice(i, i + 2), 16);
+            if (charCode > 0) result += String.fromCharCode(charCode);
+          }
+          return result.trim();
+        } catch {
+          return '';
+        }
+      };
 
-      return new Response(JSON.stringify({ result: result.result }), {
+      const name = decodeString(nameData.result);
+      const symbol = decodeString(symbolData.result);
+      const decimals = decimalsData.result ? parseInt(decimalsData.result, 16) : 18;
+
+      console.log("Direct contract read result:", { name, symbol, decimals, address: tokenAddress });
+
+      return new Response(JSON.stringify({ 
+        result: { name, symbol, decimals, logo: null } 
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
