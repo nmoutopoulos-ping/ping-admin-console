@@ -85,6 +85,56 @@ serve(async (req) => {
       });
     }
 
+    if (method === 'alchemy_getTokenBalances') {
+      // Get all token balances for a wallet address
+      const response = await fetch(ALCHEMY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'alchemy_getTokenBalances',
+          params: [params.address, 'erc20'],
+        }),
+      });
+
+      const result = await response.json();
+      console.log("alchemy_getTokenBalances result:", result.result?.tokenBalances?.length || 0, "tokens");
+
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+
+      return new Response(JSON.stringify({ result: result.result }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (method === 'alchemy_getTokenMetadata') {
+      // Get token metadata (name, symbol, decimals)
+      const response = await fetch(ALCHEMY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'alchemy_getTokenMetadata',
+          params: [params.contractAddress],
+        }),
+      });
+
+      const result = await response.json();
+      console.log("alchemy_getTokenMetadata result:", result.result);
+
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+
+      return new Response(JSON.stringify({ result: result.result }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (method === 'getBalance') {
       const response = await fetch(ALCHEMY_URL, {
         method: 'POST',
