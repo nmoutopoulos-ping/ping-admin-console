@@ -2,100 +2,147 @@ import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useWallet } from "@/contexts/WalletContext";
 import { useContracts } from "@/hooks/useContracts";
-import { getTokenBalance, readTokenInfo, TokenInfo, BalanceResult } from "@/lib/onchain";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wallet, Banknote, Building2, RefreshCw, AlertCircle } from "lucide-react";
+import { Wallet, Banknote, Building2, RefreshCw, AlertCircle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ethers } from "ethers";
 
-type TokenBalanceData = {
-  contractId: string;
-  label: string;
-  type: "fiat" | "asset";
+type WalletToken = {
+  contractAddress: string;
   symbol: string;
+  name: string;
+  decimals: number;
   balance: string;
+  balanceFormatted: string;
+  // Platform registration status
   isRegistered: boolean;
+  registeredType?: "fiat" | "asset";
+  registeredLabel?: string;
 };
 
 export default function WalletDashboardPage() {
   const { wallet } = useWallet();
   const { contracts, loading: contractsLoading } = useContracts();
-  const [balances, setBalances] = useState<TokenBalanceData[]>([]);
+  const [walletTokens, setWalletTokens] = useState<WalletToken[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchBalances = async () => {
-    if (!wallet?.address || contracts.length === 0) return;
+  const scanWalletTokens = async () => {
+    if (!wallet?.address) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const results = await Promise.all(
-        contracts.map(async (contract) => {
+      // Step 1: Get all token balances from wallet using Alchemy
+      const { data: balancesData, error: balancesError } = await supabase.functions.invoke('alchemy-rpc', {
+        body: { 
+          method: 'alchemy_getTokenBalances', 
+          params: { address: wallet.address } 
+        },
+      });
+
+      if (balancesError) throw new Error(balancesError.message);
+      if (balancesData?.error) throw new Error(balancesData.error);
+
+      const tokenBalances = balancesData?.result?.tokenBalances || [];
+      
+      // Filter tokens with non-zero balance
+      const nonZeroTokens = tokenBalances.filter(
+        (t: { tokenBalance: string }) => t.tokenBalance !== "0x0000000000000000000000000000000000000000000000000000000000000000" && t.tokenBalance !== "0x"
+      );
+
+      // Step 2: Get metadata for each token
+      const tokensWithMetadata: WalletToken[] = await Promise.all(
+        nonZeroTokens.map(async (token: { contractAddress: string; tokenBalance: string }) => {
           try {
-            const [tokenInfo, balanceResult] = await Promise.all([
-              readTokenInfo(contract.id),
-              getTokenBalance(contract.id, wallet.address),
-            ]);
+            const { data: metaData, error: metaError } = await supabase.functions.invoke('alchemy-rpc', {
+              body: { 
+                method: 'alchemy_getTokenMetadata', 
+                params: { contractAddress: token.contractAddress } 
+              },
+            });
+
+            if (metaError || metaData?.error) {
+              return null;
+            }
+
+            const metadata = metaData?.result || {};
+            const decimals = metadata.decimals || 18;
+            const balanceBigInt = BigInt(token.tokenBalance);
+            const balanceFormatted = ethers.formatUnits(balanceBigInt, decimals);
+
+            // Check if registered on platform
+            const registeredContract = contracts.find(
+              c => c.address.toLowerCase() === token.contractAddress.toLowerCase()
+            );
 
             return {
-              contractId: contract.id,
-              label: contract.label,
-              type: contract.type,
-              symbol: tokenInfo.symbol,
-              balance: balanceResult.formatted,
-              isRegistered: true,
+              contractAddress: token.contractAddress,
+              symbol: metadata.symbol || "???",
+              name: metadata.name || "Unknown Token",
+              decimals,
+              balance: balanceBigInt.toString(),
+              balanceFormatted,
+              isRegistered: !!registeredContract,
+              registeredType: registeredContract?.type,
+              registeredLabel: registeredContract?.label,
             };
           } catch (err) {
-            console.error(`Failed to fetch ${contract.id}:`, err);
-            return {
-              contractId: contract.id,
-              label: contract.label,
-              type: contract.type,
-              symbol: contract.id,
-              balance: "Error",
-              isRegistered: true,
-            };
+            console.error(`Failed to get metadata for ${token.contractAddress}:`, err);
+            return null;
           }
         })
       );
 
-      setBalances(results);
+      // Filter out nulls and sort: registered first, then by balance
+      const validTokens = tokensWithMetadata
+        .filter((t): t is WalletToken => t !== null)
+        .sort((a, b) => {
+          if (a.isRegistered !== b.isRegistered) return a.isRegistered ? -1 : 1;
+          return parseFloat(b.balanceFormatted) - parseFloat(a.balanceFormatted);
+        });
+
+      setWalletTokens(validTokens);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch balances");
+      console.error("Failed to scan wallet:", err);
+      setError(err instanceof Error ? err.message : "Failed to scan wallet");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchBalances();
-  }, [wallet?.address, contracts]);
+    if (wallet?.address && contracts.length >= 0 && !contractsLoading) {
+      scanWalletTokens();
+    }
+  }, [wallet?.address, contracts, contractsLoading]);
 
-  const fiatTokens = balances.filter((b) => b.type === "fiat");
-  const assetTokens = balances.filter((b) => b.type === "asset");
+  const registeredTokens = walletTokens.filter(t => t.isRegistered);
+  const unregisteredTokens = walletTokens.filter(t => !t.isRegistered);
 
   return (
     <AppLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Wallet Dashboard</h1>
+            <h1 className="text-2xl font-bold text-foreground">My Wallet</h1>
             <p className="text-muted-foreground">
-              {wallet ? `Connected: ${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}` : "Connect your wallet to view balances"}
+              {wallet ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}` : "Connect wallet to view balances"}
             </p>
           </div>
           {wallet && (
             <Button
               variant="outline"
               size="sm"
-              onClick={fetchBalances}
+              onClick={scanWalletTokens}
               disabled={loading}
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-              Refresh
+              Scan Wallet
             </Button>
           )}
         </div>
@@ -105,22 +152,25 @@ export default function WalletDashboardPage() {
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Wallet className="w-12 h-12 text-muted-foreground mb-4" />
               <p className="text-muted-foreground text-center">
-                Connect your wallet using the button in the header to view your token balances.
+                Connect your MetaMask wallet using the button in the header.
               </p>
             </CardContent>
           </Card>
-        ) : contractsLoading || loading ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i}>
-                <CardHeader>
-                  <Skeleton className="h-5 w-32" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-8 w-24" />
-                </CardContent>
-              </Card>
-            ))}
+        ) : loading || contractsLoading ? (
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i}>
+                  <CardHeader className="pb-2">
+                    <Skeleton className="h-5 w-32" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-8 w-24 mb-2" />
+                    <Skeleton className="h-4 w-20" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         ) : error ? (
           <Card className="border-destructive">
@@ -129,51 +179,54 @@ export default function WalletDashboardPage() {
               <p className="text-destructive">{error}</p>
             </CardContent>
           </Card>
+        ) : walletTokens.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Wallet className="w-12 h-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground text-center">
+                No ERC20 tokens found in your wallet.
+              </p>
+            </CardContent>
+          </Card>
         ) : (
-          <div className="space-y-6">
-            {/* Fiat Tokens Section */}
+          <div className="space-y-8">
+            {/* Platform Registered Tokens */}
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <Banknote className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold">Fiat Tokens</h2>
-                <Badge variant="secondary">{fiatTokens.length}</Badge>
+                <Check className="w-5 h-5 text-green-500" />
+                <h2 className="text-lg font-semibold">Registered on Platform</h2>
+                <Badge variant="secondary">{registeredTokens.length}</Badge>
               </div>
-              {fiatTokens.length === 0 ? (
+              {registeredTokens.length === 0 ? (
                 <Card className="border-dashed">
                   <CardContent className="py-6 text-center text-muted-foreground">
-                    No fiat tokens registered on platform
+                    No registered tokens found in your wallet
                   </CardContent>
                 </Card>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {fiatTokens.map((token) => (
-                    <TokenBalanceCard key={token.contractId} token={token} />
+                  {registeredTokens.map((token) => (
+                    <TokenCard key={token.contractAddress} token={token} />
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Asset Tokens Section */}
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Building2 className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold">Asset Tokens</h2>
-                <Badge variant="secondary">{assetTokens.length}</Badge>
-              </div>
-              {assetTokens.length === 0 ? (
-                <Card className="border-dashed">
-                  <CardContent className="py-6 text-center text-muted-foreground">
-                    No asset tokens registered on platform
-                  </CardContent>
-                </Card>
-              ) : (
+            {/* Unregistered Tokens */}
+            {unregisteredTokens.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <X className="w-5 h-5 text-muted-foreground" />
+                  <h2 className="text-lg font-semibold">Not Registered</h2>
+                  <Badge variant="outline">{unregisteredTokens.length}</Badge>
+                </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {assetTokens.map((token) => (
-                    <TokenBalanceCard key={token.contractId} token={token} />
+                  {unregisteredTokens.map((token) => (
+                    <TokenCard key={token.contractAddress} token={token} />
                   ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -181,7 +234,7 @@ export default function WalletDashboardPage() {
   );
 }
 
-function TokenBalanceCard({ token }: { token: TokenBalanceData }) {
+function TokenCard({ token }: { token: WalletToken }) {
   const formatBalance = (balance: string) => {
     const num = parseFloat(balance);
     if (isNaN(num)) return balance;
@@ -191,26 +244,37 @@ function TokenBalanceCard({ token }: { token: TokenBalanceData }) {
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={`hover:shadow-md transition-shadow ${token.isRegistered ? "" : "opacity-75"}`}>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium truncate">{token.label}</CardTitle>
-          <Badge variant={token.type === "fiat" ? "default" : "outline"} className="text-xs">
-            {token.type.toUpperCase()}
-          </Badge>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-sm font-medium truncate">
+            {token.isRegistered ? token.registeredLabel : token.name}
+          </CardTitle>
+          {token.isRegistered ? (
+            <Badge variant={token.registeredType === "fiat" ? "default" : "outline"} className="text-xs shrink-0">
+              {token.registeredType === "fiat" ? (
+                <><Banknote className="w-3 h-3 mr-1" /> FIAT</>
+              ) : (
+                <><Building2 className="w-3 h-3 mr-1" /> ASSET</>
+              )}
+            </Badge>
+          ) : (
+            <Badge variant="secondary" className="text-xs shrink-0">
+              <X className="w-3 h-3 mr-1" /> Not Listed
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent>
         <div className="flex items-baseline gap-2">
           <span className="text-2xl font-bold text-foreground">
-            {formatBalance(token.balance)}
+            {formatBalance(token.balanceFormatted)}
           </span>
           <span className="text-sm text-muted-foreground">{token.symbol}</span>
         </div>
-        <div className="mt-2 flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-green-500" />
-          <span className="text-xs text-muted-foreground">Registered on platform</span>
-        </div>
+        <p className="text-xs text-muted-foreground mt-2 truncate font-mono">
+          {token.contractAddress.slice(0, 10)}...{token.contractAddress.slice(-8)}
+        </p>
       </CardContent>
     </Card>
   );
