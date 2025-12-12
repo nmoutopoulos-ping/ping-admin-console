@@ -7,10 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wallet, Banknote, Building2, RefreshCw, AlertCircle, Check, X, Copy, Globe, ChevronRight } from "lucide-react";
+import { Wallet, Banknote, Building2, RefreshCw, AlertCircle, Check, X, Copy, Globe, ChevronRight, EyeOff, Eye, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ethers } from "ethers";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 type WalletToken = {
   contractAddress: string;
@@ -25,12 +26,33 @@ type WalletToken = {
   registeredLabel?: string;
 };
 
+const HIDDEN_TOKENS_KEY = "wallet_hidden_tokens";
+
 export default function WalletDashboardPage() {
   const { wallet } = useWallet();
   const { contracts, loading: contractsLoading } = useContracts();
   const [walletTokens, setWalletTokens] = useState<WalletToken[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hiddenTokens, setHiddenTokens] = useState<Set<string>>(() => {
+    const stored = localStorage.getItem(HIDDEN_TOKENS_KEY);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  });
+  const [showHidden, setShowHidden] = useState(false);
+
+  const toggleHideToken = (address: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newHidden = new Set(hiddenTokens);
+    if (newHidden.has(address.toLowerCase())) {
+      newHidden.delete(address.toLowerCase());
+      toast.success("Token unhidden");
+    } else {
+      newHidden.add(address.toLowerCase());
+      toast.success("Token hidden");
+    }
+    setHiddenTokens(newHidden);
+    localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify([...newHidden]));
+  };
 
   const scanWalletTokens = async () => {
     if (!wallet?.address) return;
@@ -119,7 +141,8 @@ export default function WalletDashboardPage() {
   }, [wallet?.address, contracts, contractsLoading]);
 
   const registeredTokens = walletTokens.filter(t => t.isRegistered);
-  const unregisteredTokens = walletTokens.filter(t => !t.isRegistered);
+  const unregisteredTokens = walletTokens.filter(t => !t.isRegistered && !hiddenTokens.has(t.contractAddress.toLowerCase()));
+  const hiddenTokensList = walletTokens.filter(t => !t.isRegistered && hiddenTokens.has(t.contractAddress.toLowerCase()));
 
   return (
     <AppLayout>
@@ -219,10 +242,31 @@ export default function WalletDashboardPage() {
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {unregisteredTokens.map((token) => (
-                    <TokenCard key={token.contractAddress} token={token} />
+                    <TokenCard key={token.contractAddress} token={token} onHide={toggleHideToken} />
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Hidden Tokens (Collapsible) */}
+            {hiddenTokensList.length > 0 && (
+              <Collapsible open={showHidden} onOpenChange={setShowHidden}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2 w-full justify-start text-muted-foreground hover:text-foreground">
+                    <EyeOff className="w-5 h-5" />
+                    <span className="font-semibold">Hidden Tokens</span>
+                    <Badge variant="secondary" className="ml-1">{hiddenTokensList.length}</Badge>
+                    {showHidden ? <ChevronUp className="w-4 h-4 ml-auto" /> : <ChevronDown className="w-4 h-4 ml-auto" />}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {hiddenTokensList.map((token) => (
+                      <TokenCard key={token.contractAddress} token={token} onHide={toggleHideToken} isHidden />
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             )}
           </div>
         )}
@@ -231,7 +275,7 @@ export default function WalletDashboardPage() {
   );
 }
 
-function TokenCard({ token }: { token: WalletToken }) {
+function TokenCard({ token, onHide, isHidden }: { token: WalletToken; onHide?: (address: string, e: React.MouseEvent) => void; isHidden?: boolean }) {
   const navigate = useNavigate();
 
   const formatBalance = (balance: string, decimals: number) => {
@@ -259,19 +303,32 @@ function TokenCard({ token }: { token: WalletToken }) {
           <CardTitle className="text-sm font-medium truncate">
             {token.isRegistered ? token.registeredLabel : token.name}
           </CardTitle>
-          {token.isRegistered ? (
-            <Badge variant={token.registeredType === "fiat" ? "default" : "outline"} className="text-xs shrink-0">
-              {token.registeredType === "fiat" ? (
-                <><Banknote className="w-3 h-3 mr-1" /> FIAT</>
-              ) : (
-                <><Building2 className="w-3 h-3 mr-1" /> ASSET</>
-              )}
-            </Badge>
-          ) : (
-            <Badge variant="secondary" className="text-xs shrink-0">
-              <X className="w-3 h-3 mr-1" /> Not Listed
-            </Badge>
-          )}
+          <div className="flex items-center gap-1">
+            {!token.isRegistered && onHide && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 shrink-0"
+                onClick={(e) => onHide(token.contractAddress, e)}
+                title={isHidden ? "Unhide token" : "Hide token"}
+              >
+                {isHidden ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+              </Button>
+            )}
+            {token.isRegistered ? (
+              <Badge variant={token.registeredType === "fiat" ? "default" : "outline"} className="text-xs shrink-0">
+                {token.registeredType === "fiat" ? (
+                  <><Banknote className="w-3 h-3 mr-1" /> FIAT</>
+                ) : (
+                  <><Building2 className="w-3 h-3 mr-1" /> ASSET</>
+                )}
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="text-xs shrink-0">
+                <X className="w-3 h-3 mr-1" /> Not Listed
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
