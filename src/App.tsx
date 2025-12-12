@@ -9,6 +9,7 @@ import FiatTokensPage from "./pages/FiatTokensPage";
 import AssetTokensPage from "./pages/AssetTokensPage";
 import RequestsPage from "./pages/RequestsPage";
 import WalletDashboardPage from "./pages/WalletDashboardPage";
+import WalletTokenDetailPage from "./pages/WalletTokenDetailPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/wallet" element={<ProtectedRoute><WalletDashboardPage /></ProtectedRoute>} />
+            <Route path="/wallet/:contractAddress" element={<ProtectedRoute><WalletTokenDetailPage /></ProtectedRoute>} />
             <Route path="/fiat-tokens" element={<ProtectedRoute><FiatTokensPage /></ProtectedRoute>} />
             <Route path="/asset-tokens" element={<ProtectedRoute><AssetTokensPage /></ProtectedRoute>} />
             <Route path="/tokens" element={<Navigate to="/fiat-tokens" replace />} />

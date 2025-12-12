@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useWallet } from "@/contexts/WalletContext";
 import { useContracts } from "@/hooks/useContracts";
@@ -6,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wallet, Banknote, Building2, RefreshCw, AlertCircle, Check, X, Copy, Globe } from "lucide-react";
+import { Wallet, Banknote, Building2, RefreshCw, AlertCircle, Check, X, Copy, Globe, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ethers } from "ethers";
@@ -231,21 +232,28 @@ export default function WalletDashboardPage() {
 }
 
 function TokenCard({ token }: { token: WalletToken }) {
-  const formatBalance = (balance: string) => {
+  const navigate = useNavigate();
+
+  const formatBalance = (balance: string, decimals: number) => {
     const num = parseFloat(balance);
     if (isNaN(num)) return balance;
     if (num >= 1000000) return `${(num / 1000000).toFixed(2)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(2)}K`;
+    if (decimals === 0) return Math.floor(num).toLocaleString();
     return num.toLocaleString(undefined, { maximumFractionDigits: 4 });
   };
 
-  const copyAddress = () => {
+  const copyAddress = (e: React.MouseEvent) => {
+    e.stopPropagation();
     navigator.clipboard.writeText(token.contractAddress);
     toast.success("Contract address copied!");
   };
 
   return (
-    <Card className={`hover:shadow-md transition-shadow ${token.isRegistered ? "" : "opacity-75"}`}>
+    <Card 
+      className={`hover:shadow-md transition-shadow cursor-pointer ${token.isRegistered ? "" : "opacity-75"}`}
+      onClick={() => navigate(`/wallet/${token.contractAddress}`)}
+    >
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-sm font-medium truncate">
@@ -267,11 +275,11 @@ function TokenCard({ token }: { token: WalletToken }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold text-foreground">
-            {formatBalance(token.balanceFormatted)}
-          </span>
-          <span className="text-sm text-muted-foreground">{token.symbol}</span>
+        <div className="flex items-center justify-between">
+          <div className="text-2xl font-bold text-foreground">
+            {formatBalance(token.balanceFormatted, token.decimals)} <span className="text-lg font-medium text-muted-foreground">{token.symbol}</span>
+          </div>
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
         </div>
         
         {/* Network Badge */}
