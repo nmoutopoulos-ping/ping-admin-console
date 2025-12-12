@@ -9,10 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Wallet, Banknote, Building2, ArrowLeft, Copy, ExternalLink, Users, Coins, Hash, User } from "lucide-react";
+import { Wallet, Banknote, Building2, ArrowLeft, Copy, ExternalLink, Users, Coins, Hash, User, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { ethers } from "ethers";
-import { shortenAddress, getHoldersWithBalances, getContractOwner, readTokenInfo } from "@/lib/onchain";
+import { shortenAddress, getHoldersWithBalances } from "@/lib/onchain";
 
 type TokenDetail = {
   contractAddress: string;
@@ -260,11 +260,24 @@ export default function WalletTokenDetailPage() {
                   )}
                 </Badge>
               ) : (
-                <Badge variant="secondary">Not Registered</Badge>
-              )}
+              <Badge variant="secondary">Not Registered</Badge>
+            )}
             </div>
             <p className="text-muted-foreground">{token.symbol}</p>
           </div>
+          
+          {/* Admin Tools Navigation */}
+          {token.isRegistered && token.registeredId && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(token.registeredType === "fiat" ? "/fiat-tokens" : "/asset-tokens")}
+              className="flex items-center gap-2"
+            >
+              <Wrench className="w-4 h-4" />
+              Admin Tools
+            </Button>
+          )}
         </div>
 
         {/* Stats Grid */}

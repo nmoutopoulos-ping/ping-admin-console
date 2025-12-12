@@ -339,12 +339,6 @@ export async function getHoldersWithBalances(contractId: string): Promise<Holder
   }
 }
 
-// Backwards compatibility alias
-export async function getHoldersWithBalance(contractId: string): Promise<string[]> {
-  const result = await getHoldersWithBalances(contractId);
-  return result.addresses;
-}
-
 export function shortenAddress(address: string): string {
   if (!address) return "";
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
