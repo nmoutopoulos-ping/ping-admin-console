@@ -68,7 +68,7 @@ export default function WalletDashboardPage() {
             }
 
             const metadata = metaData?.result || {};
-            const decimals = metadata.decimals || 18;
+            const decimals = metadata.decimals ?? 18;
             const balanceBigInt = BigInt(token.tokenBalance);
             const balanceFormatted = ethers.formatUnits(balanceBigInt, decimals);
 
