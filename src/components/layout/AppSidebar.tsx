@@ -1,4 +1,4 @@
-import { Zap, Banknote, Building2, Inbox, LogOut } from "lucide-react";
+import { Zap, Banknote, Building2, Inbox, LogOut, Wallet } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/tooltip";
 
 const navItems = [
+  { title: "My Wallet", url: "/wallet", icon: Wallet },
   { title: "Fiat Tokens", url: "/fiat-tokens", icon: Banknote },
   { title: "Asset Tokens", url: "/asset-tokens", icon: Building2 },
   { title: "Requests", url: "/requests", icon: Inbox },
