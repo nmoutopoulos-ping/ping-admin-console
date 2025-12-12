@@ -50,15 +50,10 @@ export default function WalletDashboardPage() {
       if (balancesData?.error) throw new Error(balancesData.error);
 
       const tokenBalances = balancesData?.result?.tokenBalances || [];
-      
-      // Filter tokens with non-zero balance
-      const nonZeroTokens = tokenBalances.filter(
-        (t: { tokenBalance: string }) => t.tokenBalance !== "0x0000000000000000000000000000000000000000000000000000000000000000" && t.tokenBalance !== "0x"
-      );
 
       // Step 2: Get metadata for each token
       const tokensWithMetadata: WalletToken[] = await Promise.all(
-        nonZeroTokens.map(async (token: { contractAddress: string; tokenBalance: string }) => {
+        tokenBalances.map(async (token: { contractAddress: string; tokenBalance: string }) => {
           try {
             const { data: metaData, error: metaError } = await supabase.functions.invoke('alchemy-rpc', {
               body: { 
