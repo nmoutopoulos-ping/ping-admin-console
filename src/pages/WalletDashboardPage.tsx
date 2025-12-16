@@ -1,30 +1,17 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useWallet } from "@/contexts/WalletContext";
 import { useContracts } from "@/hooks/useContracts";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wallet, Banknote, Building2, RefreshCw, AlertCircle, Check, X, Copy, Globe, ChevronRight, EyeOff, Eye, ChevronDown, ChevronUp } from "lucide-react";
+import { Wallet, RefreshCw, AlertCircle, Check, X, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ethers } from "ethers";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-
-type WalletToken = {
-  contractAddress: string;
-  symbol: string;
-  name: string;
-  decimals: number;
-  balance: string;
-  balanceFormatted: string;
-  // Platform registration status
-  isRegistered: boolean;
-  registeredType?: "fiat" | "asset";
-  registeredLabel?: string;
-};
+import { TokenCard, WalletToken } from "@/components/wallet/TokenCard";
 
 const HIDDEN_TOKENS_KEY = "wallet_hidden_tokens";
 
@@ -61,7 +48,6 @@ export default function WalletDashboardPage() {
     setError(null);
 
     try {
-      // Step 1: Get all token balances from wallet using Alchemy
       const { data: balancesData, error: balancesError } = await supabase.functions.invoke('alchemy-rpc', {
         body: { 
           method: 'alchemy_getTokenBalances', 
@@ -74,7 +60,6 @@ export default function WalletDashboardPage() {
 
       const tokenBalances = balancesData?.result?.tokenBalances || [];
 
-      // Step 2: Get metadata for each token
       const tokensWithMetadata: WalletToken[] = await Promise.all(
         tokenBalances.map(async (token: { contractAddress: string; tokenBalance: string }) => {
           try {
@@ -94,7 +79,6 @@ export default function WalletDashboardPage() {
             const balanceBigInt = BigInt(token.tokenBalance);
             const balanceFormatted = ethers.formatUnits(balanceBigInt, decimals);
 
-            // Check if registered on platform
             const registeredContract = contracts.find(
               c => c.address.toLowerCase() === token.contractAddress.toLowerCase()
             );
@@ -117,7 +101,6 @@ export default function WalletDashboardPage() {
         })
       );
 
-      // Filter out nulls and sort: registered first, then by balance
       const validTokens = tokensWithMetadata
         .filter((t): t is WalletToken => t !== null)
         .sort((a, b) => {
@@ -181,10 +164,8 @@ export default function WalletDashboardPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {[...Array(6)].map((_, i) => (
                 <Card key={i}>
-                  <CardHeader className="pb-2">
-                    <Skeleton className="h-5 w-32" />
-                  </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-6">
+                    <Skeleton className="h-5 w-32 mb-4" />
                     <Skeleton className="h-8 w-24 mb-2" />
                     <Skeleton className="h-4 w-20" />
                   </CardContent>
@@ -272,94 +253,5 @@ export default function WalletDashboardPage() {
         )}
       </div>
     </AppLayout>
-  );
-}
-
-function TokenCard({ token, onHide, isHidden }: { token: WalletToken; onHide?: (address: string, e: React.MouseEvent) => void; isHidden?: boolean }) {
-  const navigate = useNavigate();
-
-  const formatBalance = (balance: string, decimals: number) => {
-    const num = parseFloat(balance);
-    if (isNaN(num)) return balance;
-    if (num >= 1000000) return `${(num / 1000000).toFixed(2)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(2)}K`;
-    if (decimals === 0) return Math.floor(num).toLocaleString();
-    return num.toLocaleString(undefined, { maximumFractionDigits: 4 });
-  };
-
-  const copyAddress = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(token.contractAddress);
-    toast.success("Contract address copied!");
-  };
-
-  return (
-    <Card 
-      className={`hover:shadow-md transition-shadow cursor-pointer ${token.isRegistered ? "" : "opacity-75"}`}
-      onClick={() => navigate(`/wallet/${token.contractAddress}`)}
-    >
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-sm font-medium truncate">
-            {token.isRegistered ? token.registeredLabel : token.name}
-          </CardTitle>
-          <div className="flex items-center gap-1">
-            {!token.isRegistered && onHide && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 shrink-0"
-                onClick={(e) => onHide(token.contractAddress, e)}
-                title={isHidden ? "Unhide token" : "Hide token"}
-              >
-                {isHidden ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-              </Button>
-            )}
-            {token.isRegistered ? (
-              <Badge variant={token.registeredType === "fiat" ? "default" : "outline"} className="text-xs shrink-0">
-                {token.registeredType === "fiat" ? (
-                  <><Banknote className="w-3 h-3 mr-1" /> FIAT</>
-                ) : (
-                  <><Building2 className="w-3 h-3 mr-1" /> ASSET</>
-                )}
-              </Badge>
-            ) : (
-              <Badge variant="secondary" className="text-xs shrink-0">
-                <X className="w-3 h-3 mr-1" /> Not Listed
-              </Badge>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="text-2xl font-bold text-foreground">
-            {formatBalance(token.balanceFormatted, token.decimals)} <span className="text-lg font-medium text-muted-foreground">{token.symbol}</span>
-          </div>
-          <ChevronRight className="w-5 h-5 text-muted-foreground" />
-        </div>
-        
-        {/* Network Badge */}
-        <div className="flex items-center gap-1.5">
-          <Globe className="w-3 h-3 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">Sepolia Testnet</span>
-        </div>
-        
-        {/* Full Contract Address */}
-        <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
-          <code className="text-xs font-mono text-foreground break-all flex-1 select-all">
-            {token.contractAddress}
-          </code>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 shrink-0"
-            onClick={copyAddress}
-          >
-            <Copy className="w-3 h-3" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

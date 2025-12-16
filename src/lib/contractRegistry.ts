@@ -7,8 +7,8 @@ export type TrackedContract = {
   abi: string[];
 };
 
-// Full ERC20 ABI for fiat tokens (includes mint, burn, ownership)
-export const ERC20_ABI: string[] = [
+// Base ERC20 ABI (standard functions)
+const BASE_ERC20_ABI: string[] = [
   "function name() view returns (string)",
   "function symbol() view returns (string)",
   "function decimals() view returns (uint8)",
@@ -18,21 +18,23 @@ export const ERC20_ABI: string[] = [
   "function approve(address spender, uint256 value) returns (bool)",
   "function allowance(address owner, address spender) view returns (uint256)",
   "function transferFrom(address from, address to, uint256 value) returns (bool)",
-  "function mint(address to, uint256 amount)",
-  "function burn(address from, uint256 amount)",
-  "function owner() view returns (address)",
-  "function transferOwnership(address newOwner)",
-  "function renounceOwnership()",
 ];
 
-// Extended ABI for asset tokens with mint/burn/ownership
-export const ASSET_TOKEN_ABI: string[] = [
-  ...ERC20_ABI,
-  "function mint(address to, uint256 amount)",
-  "function burn(address from, uint256 amount)",
+// Ownable + Mintable/Burnable extensions
+const OWNABLE_ABI: string[] = [
   "function owner() view returns (address)",
   "function transferOwnership(address newOwner)",
   "function renounceOwnership()",
+  "function mint(address to, uint256 amount)",
+  "function burn(address from, uint256 amount)",
+];
+
+// Full ERC20 ABI for fiat tokens
+export const ERC20_ABI: string[] = [...BASE_ERC20_ABI, ...OWNABLE_ABI];
+
+// Extended ABI for asset tokens with holder tracking
+export const ASSET_TOKEN_ABI: string[] = [
+  ...ERC20_ABI,
   "function holders() view returns (address[])",
   "function holdersWithBalances() view returns (address[] addresses, uint256[] balances)",
   "function INITIAL_SUPPLY() view returns (uint256)",
