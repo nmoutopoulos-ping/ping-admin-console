@@ -13,6 +13,7 @@ import { Wallet, Banknote, Building2, ArrowLeft, Copy, ExternalLink, Users, Coin
 import { toast } from "sonner";
 import { ethers } from "ethers";
 import { shortenAddress, getHoldersWithBalances } from "@/lib/onchain";
+import { formatTokenBalance } from "@/lib/formatters";
 
 type TokenDetail = {
   contractAddress: string;
@@ -48,15 +49,6 @@ export default function WalletTokenDetailPage() {
   const [holdersLoading, setHoldersLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const formatBalance = (balance: string, decimals: number) => {
-    const num = parseFloat(balance);
-    if (isNaN(num)) return balance;
-    if (num >= 1000000) return `${(num / 1000000).toFixed(2)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(2)}K`;
-    if (decimals === 0) return Math.floor(num).toLocaleString();
-    return num.toLocaleString(undefined, { maximumFractionDigits: 4 });
-  };
-
   useEffect(() => {
     const loadTokenDetail = async () => {
       if (!contractAddress) return;
@@ -65,7 +57,6 @@ export default function WalletTokenDetailPage() {
       setError(null);
 
       try {
-        // Get token metadata from Alchemy
         const { data: metaData, error: metaError } = await supabase.functions.invoke('alchemy-rpc', {
           body: { 
             method: 'alchemy_getTokenMetadata', 
@@ -79,12 +70,10 @@ export default function WalletTokenDetailPage() {
         const metadata = metaData?.result || {};
         const decimals = metadata.decimals ?? 18;
 
-        // Check if registered on platform
         const registeredContract = contracts.find(
           c => c.address.toLowerCase() === contractAddress.toLowerCase()
         );
 
-        // Get user's balance if wallet connected
         let balance = "0";
         let balanceFormatted = "0";
         if (wallet?.address) {
@@ -106,12 +95,11 @@ export default function WalletTokenDetailPage() {
           }
         }
 
-        // Get total supply
         const { data: supplyData } = await supabase.functions.invoke('alchemy-rpc', {
           body: { 
             method: 'eth_call', 
             contractAddress,
-            params: { data: '0x18160ddd' } // totalSupply()
+            params: { data: '0x18160ddd' }
           },
         });
 
@@ -123,13 +111,12 @@ export default function WalletTokenDetailPage() {
           totalSupplyFormatted = ethers.formatUnits(supplyBigInt, decimals);
         }
 
-        // Get owner
         let owner: string | null = null;
         const { data: ownerData } = await supabase.functions.invoke('alchemy-rpc', {
           body: { 
             method: 'eth_call', 
             contractAddress,
-            params: { data: '0x8da5cb5b' } // owner()
+            params: { data: '0x8da5cb5b' }
           },
         });
         
@@ -153,7 +140,6 @@ export default function WalletTokenDetailPage() {
           registeredId: registeredContract?.id,
         });
 
-        // Load holders if registered as asset token
         if (registeredContract?.type === 'asset') {
           loadHolders(registeredContract.id, decimals, totalSupplyFormatted);
         }
@@ -266,7 +252,6 @@ export default function WalletTokenDetailPage() {
             <p className="text-muted-foreground">{token.symbol}</p>
           </div>
           
-          {/* Admin Tools Navigation */}
           {token.isRegistered && token.registeredId && (
             <Button
               variant="outline"
@@ -290,7 +275,7 @@ export default function WalletTokenDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatBalance(token.balanceFormatted, token.decimals)} {token.symbol}
+                {formatTokenBalance(token.balanceFormatted, token.decimals)} {token.symbol}
               </div>
             </CardContent>
           </Card>
@@ -303,7 +288,7 @@ export default function WalletTokenDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatBalance(token.totalSupplyFormatted, token.decimals)} {token.symbol}
+                {formatTokenBalance(token.totalSupplyFormatted, token.decimals)} {token.symbol}
               </div>
             </CardContent>
           </Card>
@@ -423,7 +408,7 @@ export default function WalletTokenDetailPage() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right font-mono">
-                          {formatBalance(holder.balanceFormatted, token.decimals)} {token.symbol}
+                          {formatTokenBalance(holder.balanceFormatted, token.decimals)} {token.symbol}
                         </TableCell>
                         <TableCell className="text-right">
                           {holder.percentage.toFixed(2)}%
