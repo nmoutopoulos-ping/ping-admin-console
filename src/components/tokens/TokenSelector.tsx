@@ -80,7 +80,8 @@ export function TokenSelector({ contracts, selectedContract, onSelect }: TokenSe
             onClick={copyAddress}
             className="flex items-center gap-1.5 px-2 py-1 bg-secondary rounded text-xs font-mono hover:bg-secondary/80 transition-colors"
           >
-            {shortenAddress(selectedContract.address)}
+            <span className="hidden sm:inline">{selectedContract.address}</span>
+            <span className="sm:hidden">{shortenAddress(selectedContract.address)}</span>
             {copied ? (
               <Check className="w-3 h-3 text-primary" />
             ) : (
