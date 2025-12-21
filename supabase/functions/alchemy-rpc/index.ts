@@ -134,7 +134,7 @@ serve(async (req) => {
         });
         const blockResult = await blockResponse.json();
         if (blockResult.result?.timestamp) {
-          blockTimestamps[blockNum] = parseInt(blockResult.result.timestamp, 16);
+          blockTimestamps[blockNum as string] = parseInt(blockResult.result.timestamp, 16);
         }
       }
 
