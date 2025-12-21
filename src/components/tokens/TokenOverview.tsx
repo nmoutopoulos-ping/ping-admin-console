@@ -192,6 +192,7 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
                   address,
                   balance: parseInt(holders.balances[index] || "0"),
                 }))
+                .filter(holder => holder.balance > 0)
                 .sort((a, b) => b.balance - a.balance)
                 .map((holder, index) => {
                 const { address, balance } = holder;
