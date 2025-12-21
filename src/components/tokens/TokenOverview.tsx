@@ -94,6 +94,7 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
   }
 
   const totalSupply = holders?.balances.reduce((sum, b) => sum + parseInt(b || "0"), 0) || 0;
+  const nonZeroHolders = holders?.addresses.filter((_, i) => parseInt(holders.balances[i] || "0") > 0) || [];
 
   return (
     <div className="space-y-6">
@@ -160,7 +161,7 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
             highlight 
           />
           <StatCard label="Decimals" value={tokenInfo.decimals.toString()} />
-          <StatCard label="Holders" value={holders?.addresses.length.toString() || "—"} />
+          <StatCard label="Holders" value={nonZeroHolders.length.toString() || "—"} />
           {owner && (
             <div className="rounded-lg border border-border/50 bg-secondary/30 p-4">
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Contract Owner</p>
