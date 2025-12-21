@@ -16,9 +16,16 @@ export function useContractAction() {
         if (resetFields) resetFields();
       } catch (err) {
         const message = err instanceof Error ? err.message : "Action failed";
-        const simplified = message.includes("execution reverted")
-          ? "Transaction reverted. Check permissions or insufficient balance."
-          : message;
+        let simplified = message;
+        
+        if (message.includes("execution reverted")) {
+          simplified = "Transaction reverted. Check permissions or insufficient balance.";
+        } else if (message.includes("missing revert data") || message.includes("estimateGas")) {
+          simplified = "Transaction would fail. For transferFrom: ensure the 'from' address has approved your wallet with sufficient allowance first.";
+        } else if (message.includes("insufficient funds")) {
+          simplified = "Insufficient ETH for gas fees.";
+        }
+        
         setState({ loading: false, error: simplified, success: null });
       }
     },
