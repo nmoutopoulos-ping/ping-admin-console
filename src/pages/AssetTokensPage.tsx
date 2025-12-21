@@ -4,7 +4,6 @@ import { TokenSelector } from "@/components/tokens/TokenSelector";
 import { TokenOverview } from "@/components/tokens/TokenOverview";
 import { AssetToolsCard } from "@/components/tokens/AssetToolsCard";
 import { AdminToolsTabs } from "@/components/tokens/AdminToolsTabs";
-import { TransactionHistory } from "@/components/tokens/TransactionHistory";
 import { TrackedContract } from "@/lib/contractRegistry";
 import { useContracts } from "@/hooks/useContracts";
 import { useWallet } from "@/contexts/WalletContext";
@@ -58,11 +57,6 @@ export default function AssetTokensPage() {
             />
 
             <TokenOverview 
-              contract={selectedContract} 
-              isWalletConnected={!!wallet} 
-            />
-
-            <TransactionHistory 
               contract={selectedContract} 
               isWalletConnected={!!wallet} 
             />
