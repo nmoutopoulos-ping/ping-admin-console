@@ -339,6 +339,32 @@ export async function getHoldersWithBalances(contractId: string): Promise<Holder
   }
 }
 
+export type TransferEvent = {
+  txHash: string;
+  blockNumber: number;
+  timestamp: number;
+  from: string;
+  to: string;
+  amount: number;
+  eventType: 'Mint' | 'Burn' | 'Transfer';
+};
+
+export async function getTransferHistory(contractId: string): Promise<TransferEvent[]> {
+  const meta = getTrackedContract(contractId);
+  
+  console.log("Getting transfer history for:", meta.address);
+
+  try {
+    const result = await alchemyCall('getTransferHistory', meta.address, {});
+    console.log("getTransferHistory result:", result.transfers?.length || 0, "transfers");
+    return result.transfers || [];
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error("getTransferHistory failed:", message);
+    throw new Error("Could not fetch transfer history.");
+  }
+}
+
 export function shortenAddress(address: string): string {
   if (!address) return "";
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
