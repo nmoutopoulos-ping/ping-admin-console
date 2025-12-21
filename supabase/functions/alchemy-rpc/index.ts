@@ -85,6 +85,97 @@ serve(async (req) => {
       });
     }
 
+    if (method === 'getTransferHistory') {
+      // Get Transfer events with block timestamps for transaction history
+      // Transfer event topic: keccak256("Transfer(address,address,uint256)")
+      const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+      
+      const logsResponse = await fetch(ALCHEMY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'eth_getLogs',
+          params: [{
+            address: contractAddress,
+            topics: [transferTopic],
+            fromBlock: '0x0',
+            toBlock: 'latest',
+          }],
+        }),
+      });
+
+      const logsResult = await logsResponse.json();
+      console.log("getTransferHistory logs count:", logsResult.result?.length || 0);
+
+      if (logsResult.error) {
+        throw new Error(logsResult.error.message);
+      }
+
+      const logs = logsResult.result || [];
+      
+      // Get unique block numbers
+      const blockNumbers = [...new Set(logs.map((log: any) => log.blockNumber))];
+      
+      // Fetch block timestamps in batches
+      const blockTimestamps: Record<string, number> = {};
+      
+      for (const blockNum of blockNumbers) {
+        const blockResponse = await fetch(ALCHEMY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'eth_getBlockByNumber',
+            params: [blockNum, false],
+          }),
+        });
+        const blockResult = await blockResponse.json();
+        if (blockResult.result?.timestamp) {
+          blockTimestamps[blockNum] = parseInt(blockResult.result.timestamp, 16);
+        }
+      }
+
+      // Parse logs into readable format
+      const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+      const transfers = logs.map((log: any) => {
+        const from = '0x' + log.topics[1].slice(26);
+        const to = '0x' + log.topics[2].slice(26);
+        const amount = parseInt(log.data, 16);
+        const blockNumber = parseInt(log.blockNumber, 16);
+        const timestamp = blockTimestamps[log.blockNumber] || 0;
+        
+        // Determine event type
+        let eventType = 'Transfer';
+        if (from.toLowerCase() === ZERO_ADDRESS) {
+          eventType = 'Mint';
+        } else if (to.toLowerCase() === ZERO_ADDRESS) {
+          eventType = 'Burn';
+        }
+        
+        return {
+          txHash: log.transactionHash,
+          blockNumber,
+          timestamp,
+          from,
+          to,
+          amount,
+          eventType,
+        };
+      });
+
+      // Sort by block number descending (newest first)
+      transfers.sort((a: any, b: any) => b.blockNumber - a.blockNumber);
+
+      console.log("getTransferHistory parsed:", transfers.length, "transfers");
+
+      return new Response(JSON.stringify({ transfers }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (method === 'alchemy_getTokenBalances') {
       // Get all token balances for a wallet address
       const response = await fetch(ALCHEMY_URL, {
