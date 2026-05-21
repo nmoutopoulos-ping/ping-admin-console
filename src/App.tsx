@@ -10,6 +10,7 @@ import AssetTokensPage from "./pages/AssetTokensPage";
 import RequestsPage from "./pages/RequestsPage";
 import WalletDashboardPage from "./pages/WalletDashboardPage";
 import WalletTokenDetailPage from "./pages/WalletTokenDetailPage";
+import LaunchTokenPage from "./pages/LaunchTokenPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/asset-tokens" element={<AssetTokensPage />} />
             <Route path="/tokens" element={<Navigate to="/fiat-tokens" replace />} />
             <Route path="/requests" element={<RequestsPage />} />
+            <Route path="/launch" element={<LaunchTokenPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
