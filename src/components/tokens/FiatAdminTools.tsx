@@ -87,7 +87,7 @@ export function FiatAdminTools({ contract, isWalletConnected }: FiatAdminToolsPr
     }
     setBalance(null);
     executeAction(
-      () => getTokenBalance(contract.id, balanceAddress),
+      () => getTokenBalance(contract, balanceAddress),
       setBalanceState,
       (result) => {
         setBalance(result);
@@ -103,7 +103,7 @@ export function FiatAdminTools({ contract, isWalletConnected }: FiatAdminToolsPr
       return;
     }
     executeAction(
-      () => transferTokens(contract.id, transferTo, transferAmount),
+      () => transferTokens(contract, transferTo, transferAmount),
       setTransferState,
       (result) => setTransferState({ loading: false, error: null, success: result.txHash }),
       () => { setTransferTo(""); setTransferAmount(""); }
@@ -117,7 +117,7 @@ export function FiatAdminTools({ contract, isWalletConnected }: FiatAdminToolsPr
       return;
     }
     executeAction(
-      () => approveTokens(contract.id, approveSpender, approveAmount),
+      () => approveTokens(contract, approveSpender, approveAmount),
       setApproveState,
       (result) => setApproveState({ loading: false, error: null, success: result.txHash }),
       () => { setApproveSpender(""); setApproveAmount(""); }
@@ -132,7 +132,7 @@ export function FiatAdminTools({ contract, isWalletConnected }: FiatAdminToolsPr
     }
     setAllowanceResult(null);
     executeAction(
-      () => getAllowance(contract.id, allowanceOwner, allowanceSpender),
+      () => getAllowance(contract, allowanceOwner, allowanceSpender),
       setAllowanceState,
       (result) => {
         setAllowanceResult(result);
@@ -148,7 +148,7 @@ export function FiatAdminTools({ contract, isWalletConnected }: FiatAdminToolsPr
       return;
     }
     executeAction(
-      () => transferFromTokens(contract.id, tfFrom, tfTo, tfAmount),
+      () => transferFromTokens(contract, tfFrom, tfTo, tfAmount),
       setTfState,
       (result) => setTfState({ loading: false, error: null, success: result.txHash }),
       () => { setTfFrom(""); setTfTo(""); setTfAmount(""); }
@@ -162,7 +162,7 @@ export function FiatAdminTools({ contract, isWalletConnected }: FiatAdminToolsPr
       return;
     }
     executeAction(
-      () => mintTokens(contract.id, mintTo, mintAmount),
+      () => mintTokens(contract, mintTo, mintAmount),
       setMintState,
       (result) => setMintState({ loading: false, error: null, success: result.txHash }),
       () => { setMintTo(""); setMintAmount(""); }
@@ -176,7 +176,7 @@ export function FiatAdminTools({ contract, isWalletConnected }: FiatAdminToolsPr
       return;
     }
     executeAction(
-      () => burnTokens(contract.id, burnFrom, burnAmount),
+      () => burnTokens(contract, burnFrom, burnAmount),
       setBurnState,
       (result) => setBurnState({ loading: false, error: null, success: result.txHash }),
       () => { setBurnFrom(""); setBurnAmount(""); }
@@ -187,7 +187,7 @@ export function FiatAdminTools({ contract, isWalletConnected }: FiatAdminToolsPr
     if (!contract) return;
     setOwner(null);
     executeAction(
-      () => getContractOwner(contract.id),
+      () => getContractOwner(contract),
       setOwnerState,
       (result) => {
         setOwner(result);

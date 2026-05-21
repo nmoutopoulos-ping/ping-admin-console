@@ -38,7 +38,7 @@ export function AssetToolsCard({ contract, isWalletConnected }: AssetToolsCardPr
       return;
     }
     executeAction(
-      () => mintTokens(contract.id, mintTo, mintAmount),
+      () => mintTokens(contract, mintTo, mintAmount),
       setMintState,
       (result) => setMintState({ loading: false, error: null, success: result.txHash }),
       () => { setMintTo(""); setMintAmount(""); }
@@ -52,7 +52,7 @@ export function AssetToolsCard({ contract, isWalletConnected }: AssetToolsCardPr
       return;
     }
     executeAction(
-      () => burnTokens(contract.id, burnFrom, burnAmount),
+      () => burnTokens(contract, burnFrom, burnAmount),
       setBurnState,
       (result) => setBurnState({ loading: false, error: null, success: result.txHash }),
       () => { setBurnFrom(""); setBurnAmount(""); }
@@ -66,7 +66,7 @@ export function AssetToolsCard({ contract, isWalletConnected }: AssetToolsCardPr
       return;
     }
     executeAction(
-      () => transferOwnership(contract.id, newOwner),
+      () => transferOwnership(contract, newOwner),
       setOwnershipState,
       (result) => {
         setOwnershipState({ loading: false, error: null, success: result.txHash });
@@ -79,7 +79,7 @@ export function AssetToolsCard({ contract, isWalletConnected }: AssetToolsCardPr
     if (!contract) return;
     if (!confirm("Are you sure? This action is IRREVERSIBLE.")) return;
     executeAction(
-      () => renounceOwnership(contract.id),
+      () => renounceOwnership(contract),
       setOwnershipState,
       (result) => setOwnershipState({ loading: false, error: null, success: result.txHash })
     );

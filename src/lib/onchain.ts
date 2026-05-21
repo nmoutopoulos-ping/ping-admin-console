@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { TRACKED_CONTRACTS, TrackedContract } from "./contractRegistry";
+import { TrackedContract } from "./contractRegistry";
 import { supabase } from "@/integrations/supabase/client";
 
 declare global {
@@ -79,12 +79,6 @@ export async function getSigner() {
   return provider.getSigner();
 }
 
-export function getTrackedContract(id: string): TrackedContract {
-  const c = TRACKED_CONTRACTS.find((c) => c.id === id);
-  if (!c) throw new Error(`Unknown contract id: ${id}`);
-  return c;
-}
-
 export type TokenInfo = {
   name: string;
   symbol: string;
@@ -94,8 +88,7 @@ export type TokenInfo = {
 };
 
 // Read-only version using Alchemy (no wallet required)
-export async function readTokenInfo(contractId: string): Promise<TokenInfo> {
-  const meta = getTrackedContract(contractId);
+export async function readTokenInfo(contract: TrackedContract): Promise<TokenInfo> {
 
   const nameSig = "function name() view returns (string)";
   const symbolSig = "function symbol() view returns (string)";
@@ -103,10 +96,10 @@ export async function readTokenInfo(contractId: string): Promise<TokenInfo> {
   const totalSupplySig = "function totalSupply() view returns (uint256)";
 
   const [nameRes, symbolRes, decimalsRes, supplyRes] = await Promise.all([
-    alchemyCall('eth_call', meta.address, { data: encodeFunctionCall(nameSig) }),
-    alchemyCall('eth_call', meta.address, { data: encodeFunctionCall(symbolSig) }),
-    alchemyCall('eth_call', meta.address, { data: encodeFunctionCall(decimalsSig) }),
-    alchemyCall('eth_call', meta.address, { data: encodeFunctionCall(totalSupplySig) }),
+    alchemyCall('eth_call', contract.address, { data: encodeFunctionCall(nameSig) }),
+    alchemyCall('eth_call', contract.address, { data: encodeFunctionCall(symbolSig) }),
+    alchemyCall('eth_call', contract.address, { data: encodeFunctionCall(decimalsSig) }),
+    alchemyCall('eth_call', contract.address, { data: encodeFunctionCall(totalSupplySig) }),
   ]);
 
   const name = decodeFunctionResult(nameSig, nameRes.result)[0] as string;
@@ -132,18 +125,17 @@ export type BalanceResult = {
 
 // Read-only version using Alchemy (no wallet required)
 export async function getTokenBalance(
-  contractId: string,
+  contract: TrackedContract,
   wallet: string
 ): Promise<BalanceResult> {
-  const meta = getTrackedContract(contractId);
   const balanceOfSig = "function balanceOf(address) view returns (uint256)";
   
-  const result = await alchemyCall('eth_call', meta.address, { 
+  const result = await alchemyCall('eth_call', contract.address, { 
     data: encodeFunctionCall(balanceOfSig, [wallet]) 
   });
 
   const balance = decodeFunctionResult(balanceOfSig, result.result)[0] as bigint;
-  const formatted = ethers.formatUnits(balance, meta.decimals);
+  const formatted = ethers.formatUnits(balance, contract.decimals);
 
   return { raw: balance.toString(), formatted };
 }
@@ -153,15 +145,14 @@ export type TransferResult = {
 };
 
 export async function transferTokens(
-  contractId: string,
+  trackedContract: TrackedContract,
   to: string,
   amountHuman: string
 ): Promise<TransferResult> {
   const signer = await getSigner();
-  const meta = getTrackedContract(contractId);
-  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+  const contract = new ethers.Contract(trackedContract.address, trackedContract.abi, signer);
 
-  const amount = ethers.parseUnits(amountHuman, meta.decimals);
+  const amount = ethers.parseUnits(amountHuman, trackedContract.decimals);
   const tx = await contract.transfer(to, amount);
   const receipt = await tx.wait();
 
@@ -170,15 +161,14 @@ export async function transferTokens(
 
 // Asset token functions
 export async function mintTokens(
-  contractId: string,
+  trackedContract: TrackedContract,
   to: string,
   amountHuman: string
 ): Promise<TransferResult> {
   const signer = await getSigner();
-  const meta = getTrackedContract(contractId);
-  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+  const contract = new ethers.Contract(trackedContract.address, trackedContract.abi, signer);
 
-  const amount = ethers.parseUnits(amountHuman, meta.decimals);
+  const amount = ethers.parseUnits(amountHuman, trackedContract.decimals);
   const tx = await contract.mint(to, amount);
   const receipt = await tx.wait();
 
@@ -186,15 +176,14 @@ export async function mintTokens(
 }
 
 export async function burnTokens(
-  contractId: string,
+  trackedContract: TrackedContract,
   from: string,
   amountHuman: string
 ): Promise<TransferResult> {
   const signer = await getSigner();
-  const meta = getTrackedContract(contractId);
-  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+  const contract = new ethers.Contract(trackedContract.address, trackedContract.abi, signer);
 
-  const amount = ethers.parseUnits(amountHuman, meta.decimals);
+  const amount = ethers.parseUnits(amountHuman, trackedContract.decimals);
   const tx = await contract.burn(from, amount);
   const receipt = await tx.wait();
 
@@ -202,15 +191,14 @@ export async function burnTokens(
 }
 
 export async function approveTokens(
-  contractId: string,
+  trackedContract: TrackedContract,
   spender: string,
   amountHuman: string
 ): Promise<TransferResult> {
   const signer = await getSigner();
-  const meta = getTrackedContract(contractId);
-  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+  const contract = new ethers.Contract(trackedContract.address, trackedContract.abi, signer);
 
-  const amount = ethers.parseUnits(amountHuman, meta.decimals);
+  const amount = ethers.parseUnits(amountHuman, trackedContract.decimals);
   const tx = await contract.approve(spender, amount);
   const receipt = await tx.wait();
 
@@ -219,34 +207,32 @@ export async function approveTokens(
 
 // Read-only version using Alchemy (no wallet required)
 export async function getAllowance(
-  contractId: string,
+  contract: TrackedContract,
   owner: string,
   spender: string
 ): Promise<BalanceResult> {
-  const meta = getTrackedContract(contractId);
   const allowanceSig = "function allowance(address,address) view returns (uint256)";
   
-  const result = await alchemyCall('eth_call', meta.address, { 
+  const result = await alchemyCall('eth_call', contract.address, { 
     data: encodeFunctionCall(allowanceSig, [owner, spender]) 
   });
 
   const allowance = decodeFunctionResult(allowanceSig, result.result)[0] as bigint;
-  const formatted = ethers.formatUnits(allowance, meta.decimals);
+  const formatted = ethers.formatUnits(allowance, contract.decimals);
 
   return { raw: allowance.toString(), formatted };
 }
 
 export async function transferFromTokens(
-  contractId: string,
+  trackedContract: TrackedContract,
   from: string,
   to: string,
   amountHuman: string
 ): Promise<TransferResult> {
   const signer = await getSigner();
-  const meta = getTrackedContract(contractId);
-  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+  const contract = new ethers.Contract(trackedContract.address, trackedContract.abi, signer);
 
-  const amount = ethers.parseUnits(amountHuman, meta.decimals);
+  const amount = ethers.parseUnits(amountHuman, trackedContract.decimals);
   const tx = await contract.transferFrom(from, to, amount);
   const receipt = await tx.wait();
 
@@ -254,11 +240,10 @@ export async function transferFromTokens(
 }
 
 // Read-only version using Alchemy (no wallet required)
-export async function getContractOwner(contractId: string): Promise<string> {
-  const meta = getTrackedContract(contractId);
+export async function getContractOwner(contract: TrackedContract): Promise<string> {
   const ownerSig = "function owner() view returns (address)";
   
-  const result = await alchemyCall('eth_call', meta.address, { 
+  const result = await alchemyCall('eth_call', contract.address, { 
     data: encodeFunctionCall(ownerSig) 
   });
 
@@ -266,12 +251,11 @@ export async function getContractOwner(contractId: string): Promise<string> {
 }
 
 export async function transferOwnership(
-  contractId: string,
+  trackedContract: TrackedContract,
   newOwner: string
 ): Promise<TransferResult> {
   const signer = await getSigner();
-  const meta = getTrackedContract(contractId);
-  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+  const contract = new ethers.Contract(trackedContract.address, trackedContract.abi, signer);
 
   const tx = await contract.transferOwnership(newOwner);
   const receipt = await tx.wait();
@@ -279,10 +263,9 @@ export async function transferOwnership(
   return { txHash: receipt?.hash ?? tx.hash };
 }
 
-export async function renounceOwnership(contractId: string): Promise<TransferResult> {
+export async function renounceOwnership(trackedContract: TrackedContract): Promise<TransferResult> {
   const signer = await getSigner();
-  const meta = getTrackedContract(contractId);
-  const contract = new ethers.Contract(meta.address, meta.abi, signer);
+  const contract = new ethers.Contract(trackedContract.address, trackedContract.abi, signer);
 
   const tx = await contract.renounceOwnership();
   const receipt = await tx.wait();
@@ -296,14 +279,13 @@ export type HoldersResult = {
 };
 
 // Read-only version using Alchemy (no wallet required)
-export async function getHolders(contractId: string): Promise<string[]> {
-  const meta = getTrackedContract(contractId);
+export async function getHolders(contract: TrackedContract): Promise<string[]> {
   const holdersSig = "function holders() view returns (address[])";
 
-  console.log("Getting holders for:", meta.address);
+  console.log("Getting holders for:", contract.address);
 
   try {
-    const result = await alchemyCall('eth_call', meta.address, { 
+    const result = await alchemyCall('eth_call', contract.address, { 
       data: encodeFunctionCall(holdersSig) 
     });
     const addresses = decodeFunctionResult(holdersSig, result.result)[0] as string[];
@@ -317,14 +299,13 @@ export async function getHolders(contractId: string): Promise<string[]> {
 }
 
 // Read-only version using Alchemy (no wallet required)
-export async function getHoldersWithBalances(contractId: string): Promise<HoldersResult> {
-  const meta = getTrackedContract(contractId);
+export async function getHoldersWithBalances(contract: TrackedContract): Promise<HoldersResult> {
   const holdersSig = "function holdersWithBalances() view returns (address[], uint256[])";
 
-  console.log("Getting holdersWithBalances for:", meta.address);
+  console.log("Getting holdersWithBalances for:", contract.address);
 
   try {
-    const result = await alchemyCall('eth_call', meta.address, { 
+    const result = await alchemyCall('eth_call', contract.address, { 
       data: encodeFunctionCall(holdersSig) 
     });
     const decoded = decodeFunctionResult(holdersSig, result.result);

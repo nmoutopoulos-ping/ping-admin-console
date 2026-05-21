@@ -3,15 +3,18 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { TokenSelector } from "@/components/tokens/TokenSelector";
 import { TokenOverview } from "@/components/tokens/TokenOverview";
 import { FiatAdminTools } from "@/components/tokens/FiatAdminTools";
+import { AdminToolsTabs } from "@/components/tokens/AdminToolsTabs";
 import { TrackedContract } from "@/lib/contractRegistry";
 import { useContracts } from "@/hooks/useContracts";
 import { useWallet } from "@/contexts/WalletContext";
+import { useIsContractOwner } from "@/hooks/useIsContractOwner";
 import { Loader2 } from "lucide-react";
 
 export default function FiatTokensPage() {
   const { wallet } = useWallet();
   const [selectedContract, setSelectedContract] = useState<TrackedContract | null>(null);
   const { contracts, loading, error } = useContracts();
+  const { isOwner } = useIsContractOwner(selectedContract, wallet?.address ?? null);
 
   const fiatContracts = contracts.filter(c => c.type === "fiat");
 
@@ -60,10 +63,17 @@ export default function FiatTokensPage() {
               isWalletConnected={!!wallet} 
             />
 
-            <FiatAdminTools 
+            <AdminToolsTabs 
               contract={selectedContract} 
               isWalletConnected={!!wallet} 
             />
+
+            {isOwner && (
+              <FiatAdminTools 
+                contract={selectedContract} 
+                isWalletConnected={!!wallet} 
+              />
+            )}
           </div>
         )}
       </div>

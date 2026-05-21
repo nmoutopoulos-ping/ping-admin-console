@@ -1,4 +1,4 @@
-import { Zap, Banknote, Building2, Inbox, LogOut, Wallet } from "lucide-react";
+import { Zap, Banknote, Building2, Inbox, Wallet } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -10,11 +10,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
-  SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
 import {
   Tooltip,
   TooltipContent,
@@ -30,7 +27,6 @@ const navItems = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { user, signOut } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const isActive = (path: string) => location.pathname === path;
@@ -89,34 +85,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
-      {user && (
-        <SidebarFooter className="p-4 border-t border-sidebar-border">
-          <div className="space-y-2">
-            {!collapsed && (
-              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={collapsed ? "w-full p-2" : "w-full"}
-                  onClick={signOut}
-                >
-                  <LogOut className="w-4 h-4 flex-shrink-0" />
-                  {!collapsed && <span className="ml-2">Sign Out</span>}
-                </Button>
-              </TooltipTrigger>
-              {collapsed && (
-                <TooltipContent side="right">
-                  Sign Out
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </div>
-        </SidebarFooter>
-      )}
     </Sidebar>
   );
 }

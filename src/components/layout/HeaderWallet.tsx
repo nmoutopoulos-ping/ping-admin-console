@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Wallet, CheckCircle, Loader2, Copy, Check, AlertTriangle } from "lucide-react";
+import { Wallet, CheckCircle, Loader2, Copy, Check } from "lucide-react";
 import { connectWallet, shortenAddress } from "@/lib/onchain";
 import { useWallet } from "@/contexts/WalletContext";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Tooltip,
   TooltipContent,
@@ -14,19 +13,6 @@ export function HeaderWallet() {
   const { wallet, setWallet } = useWallet();
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [adminAddresses, setAdminAddresses] = useState<string[]>([]);
-
-  useEffect(() => {
-    const fetchAdminWallets = async () => {
-      const { data } = await supabase.from("admin_wallets").select("wallet_address");
-      if (data) {
-        setAdminAddresses(data.map((w) => w.wallet_address.toLowerCase()));
-      }
-    };
-    fetchAdminWallets();
-  }, []);
-
-  const isAdminWallet = wallet && adminAddresses.includes(wallet.address.toLowerCase());
 
   const handleConnect = async () => {
     setLoading(true);
@@ -51,19 +37,6 @@ export function HeaderWallet() {
   if (wallet) {
     return (
       <div className="flex items-center gap-2">
-        {!isAdminWallet && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-yellow-500/20 border border-yellow-500/30 rounded-full">
-                <AlertTriangle className="w-3 h-3 text-yellow-500" />
-                <span className="text-xs font-medium text-yellow-500 hidden sm:inline">Not Admin</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs">Connected wallet is not a registered admin</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
         <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/20 border border-primary/30 rounded-full">
           <CheckCircle className="w-3 h-3 text-primary" />
           <span className="text-xs font-medium text-primary hidden sm:inline">Connected</span>
@@ -85,6 +58,19 @@ export function HeaderWallet() {
           </TooltipTrigger>
           <TooltipContent>
             <p className="font-mono text-xs">{wallet.address}</p>
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => setWallet(null)}
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <span className="text-xs font-medium">✕</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs">Disconnect wallet</p>
           </TooltipContent>
         </Tooltip>
       </div>

@@ -109,4 +109,4 @@ export const TRACKED_CONTRACTS: TrackedContract[] = [
 ];
 
 // Explorer base URL - swap for different networks
-export const EXPLORER_BASE_URL = "https://etherscan.io";
+export const EXPLORER_BASE_URL = "https://sepolia.etherscan.io";

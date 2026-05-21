@@ -7,12 +7,14 @@ import { AdminToolsTabs } from "@/components/tokens/AdminToolsTabs";
 import { TrackedContract } from "@/lib/contractRegistry";
 import { useContracts } from "@/hooks/useContracts";
 import { useWallet } from "@/contexts/WalletContext";
+import { useIsContractOwner } from "@/hooks/useIsContractOwner";
 import { Loader2 } from "lucide-react";
 
 export default function AssetTokensPage() {
   const { wallet } = useWallet();
   const [selectedContract, setSelectedContract] = useState<TrackedContract | null>(null);
   const { contracts, loading, error } = useContracts();
+  const { isOwner } = useIsContractOwner(selectedContract, wallet?.address ?? null);
 
   const assetContracts = contracts.filter(c => c.type === "asset");
 
@@ -66,10 +68,12 @@ export default function AssetTokensPage() {
               isWalletConnected={!!wallet} 
             />
 
-            <AssetToolsCard 
-              contract={selectedContract} 
-              isWalletConnected={!!wallet} 
-            />
+            {isOwner && (
+              <AssetToolsCard 
+                contract={selectedContract} 
+                isWalletConnected={!!wallet} 
+              />
+            )}
           </div>
         )}
       </div>

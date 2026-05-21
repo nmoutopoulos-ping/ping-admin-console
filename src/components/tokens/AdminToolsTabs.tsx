@@ -60,7 +60,7 @@ export function AdminToolsTabs({ contract, isWalletConnected }: AdminToolsTabsPr
     }
     setBalance(null);
     executeAction(
-      () => getTokenBalance(contract.id, balanceAddress),
+      () => getTokenBalance(contract, balanceAddress),
       setBalanceState,
       (result) => {
         setBalance(result);
@@ -76,7 +76,7 @@ export function AdminToolsTabs({ contract, isWalletConnected }: AdminToolsTabsPr
       return;
     }
     executeAction(
-      () => transferTokens(contract.id, transferTo, transferAmount),
+      () => transferTokens(contract, transferTo, transferAmount),
       setTransferState,
       (result) => setTransferState({ loading: false, error: null, success: result.txHash }),
       () => { setTransferTo(""); setTransferAmount(""); }
@@ -90,7 +90,7 @@ export function AdminToolsTabs({ contract, isWalletConnected }: AdminToolsTabsPr
       return;
     }
     executeAction(
-      () => approveTokens(contract.id, approveSpender, approveAmount),
+      () => approveTokens(contract, approveSpender, approveAmount),
       setApproveState,
       (result) => setApproveState({ loading: false, error: null, success: result.txHash }),
       () => { setApproveSpender(""); setApproveAmount(""); }
@@ -105,7 +105,7 @@ export function AdminToolsTabs({ contract, isWalletConnected }: AdminToolsTabsPr
     }
     setAllowanceResult(null);
     executeAction(
-      () => getAllowance(contract.id, allowanceOwner, allowanceSpender),
+      () => getAllowance(contract, allowanceOwner, allowanceSpender),
       setAllowanceState,
       (result) => {
         setAllowanceResult(result);
@@ -121,7 +121,7 @@ export function AdminToolsTabs({ contract, isWalletConnected }: AdminToolsTabsPr
       return;
     }
     executeAction(
-      () => transferFromTokens(contract.id, tfFrom, tfTo, tfAmount),
+      () => transferFromTokens(contract, tfFrom, tfTo, tfAmount),
       setTfState,
       (result) => setTfState({ loading: false, error: null, success: result.txHash }),
       () => { setTfFrom(""); setTfTo(""); setTfAmount(""); }

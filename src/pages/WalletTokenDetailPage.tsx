@@ -13,6 +13,7 @@ import { Wallet, Banknote, Building2, ArrowLeft, Copy, ExternalLink, Users, Coin
 import { toast } from "sonner";
 import { ethers } from "ethers";
 import { shortenAddress, getHoldersWithBalances } from "@/lib/onchain";
+import { TrackedContract } from "@/lib/contractRegistry";
 import { formatTokenBalance } from "@/lib/formatters";
 
 type TokenDetail = {
@@ -141,7 +142,7 @@ export default function WalletTokenDetailPage() {
         });
 
         if (registeredContract?.type === 'asset') {
-          loadHolders(registeredContract.id, decimals, totalSupplyFormatted);
+          loadHolders(registeredContract, decimals, totalSupplyFormatted);
         }
       } catch (err) {
         console.error("Failed to load token:", err);
@@ -154,10 +155,10 @@ export default function WalletTokenDetailPage() {
     loadTokenDetail();
   }, [contractAddress, wallet?.address, contracts]);
 
-  const loadHolders = async (contractId: string, decimals: number, totalSupplyFormatted: string) => {
+  const loadHolders = async (registeredContract: TrackedContract, decimals: number, totalSupplyFormatted: string) => {
     setHoldersLoading(true);
     try {
-      const holdersData = await getHoldersWithBalances(contractId);
+      const holdersData = await getHoldersWithBalances(registeredContract);
       const totalSupplyNum = parseFloat(totalSupplyFormatted);
       
       const formattedHolders: HolderInfo[] = holdersData.addresses.map((address, i) => {

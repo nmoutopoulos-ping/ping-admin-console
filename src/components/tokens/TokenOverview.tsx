@@ -27,23 +27,23 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
 
   const isAsset = contract?.type === "asset";
-  const canLoad = contract && isWalletConnected;
+  const canLoad = !!contract;
 
   const loadData = useCallback(async () => {
-    if (!contract || !isWalletConnected) return;
+    if (!contract) return;
     
     setLoading(true);
     setError(null);
     
     try {
       const promises: Promise<any>[] = [
-        readTokenInfo(contract.id),
-        getContractOwner(contract.id),
+        readTokenInfo(contract),
+        getContractOwner(contract),
       ];
       
       // Only fetch holders for asset tokens (fiat contracts don't have this function)
       if (isAsset) {
-        promises.push(getHoldersWithBalances(contract.id));
+        promises.push(getHoldersWithBalances(contract));
       }
 
       const results = await Promise.all(promises);
@@ -62,7 +62,7 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
     } finally {
       setLoading(false);
     }
-  }, [contract, isWalletConnected, isAsset]);
+  }, [contract, isAsset]);
 
   useEffect(() => {
     if (canLoad) {
@@ -73,7 +73,7 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
       setOwner(null);
       setError(null);
     }
-  }, [contract?.id, isWalletConnected]);
+  }, [contract?.id]);
 
   const copyAddress = (address: string) => {
     navigator.clipboard.writeText(address);
@@ -87,7 +87,7 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
     return (
       <div className="rounded-xl border border-border/50 bg-card/50 p-8 text-center">
         <p className="text-muted-foreground">
-          {!contract ? "Select a token to view details" : "Connect wallet to view token data"}
+          "Select a token to view details"
         </p>
       </div>
     );
