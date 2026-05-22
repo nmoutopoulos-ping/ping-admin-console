@@ -96,11 +96,7 @@ export function LaunchDeployStep({ config, onReset }: Props) {
             <Button variant="outline" onClick={onReset}>
               Launch another
             </Button>
-            <Button
-              onClick={() =>
-                navigate(config.type === "fiat" ? "/fiat-tokens" : "/asset-tokens")
-              }
-            >
+            <Button onClick={() => navigate("/asset-tokens")}>
               Manage token →
             </Button>
           </div>

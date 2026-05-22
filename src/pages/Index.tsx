@@ -23,7 +23,7 @@ const Index = () => {
           </div>
           <div className="text-left">
             <h1 className="text-2xl font-bold text-gradient-primary">Ping Admin</h1>
-            <p className="text-sm text-muted-foreground">Asset & Fiat Console</p>
+            <p className="text-sm text-muted-foreground">Private Security Console</p>
           </div>
         </div>
 

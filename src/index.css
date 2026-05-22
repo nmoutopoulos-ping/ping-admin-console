@@ -37,7 +37,6 @@
     --radius: 0.75rem;
 
     /* Custom tokens */
-    --fiat: 142 71% 45%;
     --asset: 187 80% 45%;
     --warning: 38 92% 50%;
     --success: 142 71% 45%;
@@ -89,10 +88,6 @@
     @apply bg-secondary border border-border rounded-md px-4 py-2 font-mono text-sm;
     @apply focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary;
     @apply placeholder:text-muted-foreground;
-  }
-
-  .badge-fiat {
-    @apply bg-primary/20 text-primary border border-primary/30 px-2 py-0.5 rounded text-xs font-medium;
   }
 
   .badge-asset {

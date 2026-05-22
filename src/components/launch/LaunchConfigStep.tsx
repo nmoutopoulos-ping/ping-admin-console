@@ -28,7 +28,7 @@ export function LaunchConfigStep({ config, setConfig, onNext }: Props) {
         <TokenTypeSelector
           value={config.type}
           onChange={(type) =>
-            setConfig({ ...config, type, decimals: type === "fiat" ? 18 : 0 })
+            setConfig({ ...config, type, decimals: 0 })
           }
         />
       </div>
@@ -91,7 +91,7 @@ export function LaunchConfigStep({ config, setConfig, onNext }: Props) {
       </div>
 
       <div className="flex items-center justify-between pt-2 border-t border-border">
-        <Button variant="outline" onClick={() => navigate("/fiat-tokens")}>
+        <Button variant="outline" onClick={() => navigate("/asset-tokens")}>
           Cancel
         </Button>
         <Button onClick={onNext} disabled={!valid}>
