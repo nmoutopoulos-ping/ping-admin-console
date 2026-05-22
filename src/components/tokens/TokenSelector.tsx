@@ -18,7 +18,6 @@ interface TokenSelectorProps {
 
 export function TokenSelector({ contracts, selectedContract, onSelect }: TokenSelectorProps) {
   const [copied, setCopied] = useState(false);
-  const fiatContracts = contracts.filter((c) => c.type === "fiat");
   const assetContracts = contracts.filter((c) => c.type === "asset");
 
   const handleChange = (id: string) => {
@@ -45,20 +44,6 @@ export function TokenSelector({ contracts, selectedContract, onSelect }: TokenSe
           <SelectValue placeholder="Select a token..." />
         </SelectTrigger>
         <SelectContent className="bg-card border-border z-50">
-          <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Fiat Tokens
-          </div>
-          {fiatContracts.map((contract) => (
-            <SelectItem key={contract.id} value={contract.id} className="cursor-pointer">
-              <div className="flex items-center gap-2">
-                <span className="badge-fiat">FIAT</span>
-                <span>{contract.label}</span>
-              </div>
-            </SelectItem>
-          ))}
-          <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mt-2">
-            Asset Tokens
-          </div>
           {assetContracts.map((contract) => (
             <SelectItem key={contract.id} value={contract.id} className="cursor-pointer">
               <div className="flex items-center gap-2">
@@ -72,7 +57,7 @@ export function TokenSelector({ contracts, selectedContract, onSelect }: TokenSe
 
       {selectedContract && (
         <div className="mt-4 flex flex-wrap items-center gap-3 p-3 bg-secondary/30 rounded-lg border border-border">
-          <span className={selectedContract.type === "fiat" ? "badge-fiat" : "badge-asset"}>
+          <span className="badge-asset">
             {selectedContract.type.toUpperCase()}
           </span>
           <span className="font-medium text-sm">{selectedContract.label}</span>

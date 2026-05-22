@@ -22,9 +22,9 @@ export function useContracts() {
         id: row.id,
         label: row.label,
         address: row.address,
-        type: row.type as "fiat" | "asset",
+        type: "asset",
         decimals: row.decimals,
-        abi: row.type === "asset" ? ASSET_TOKEN_ABI : ERC20_ABI,
+        abi: ASSET_TOKEN_ABI,
       }));
 
       setContracts(mapped);
