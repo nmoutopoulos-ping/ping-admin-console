@@ -309,7 +309,7 @@ export default function WalletTokenDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {token.registeredType === 'asset' ? holders.length : '—'}
+                {token.isRegistered ? holders.length : '—'}
               </div>
             </CardContent>
           </Card>
