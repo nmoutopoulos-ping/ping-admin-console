@@ -41,7 +41,7 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="min-w-0">
               <h1 className="text-lg font-bold text-gradient-primary truncate">Ping Admin</h1>
-              <p className="text-xs text-muted-foreground truncate">Asset & Fiat Console</p>
+              <p className="text-xs text-muted-foreground truncate">Private Security Console</p>
             </div>
           )}
         </div>
