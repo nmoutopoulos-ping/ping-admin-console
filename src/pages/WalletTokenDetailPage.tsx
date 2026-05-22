@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Wallet, Banknote, Building2, ArrowLeft, Copy, ExternalLink, Users, Coins, Hash, User, Wrench } from "lucide-react";
+import { Wallet, Shield, ArrowLeft, Copy, ExternalLink, Users, Coins, Hash, User, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { ethers } from "ethers";
 import { shortenAddress, getHoldersWithBalances } from "@/lib/onchain";
@@ -240,7 +240,7 @@ export default function WalletTokenDetailPage() {
               </h1>
               {token.isRegistered ? (
                 <Badge variant="outline">
-                  <Building2 className="w-3 h-3 mr-1" /> ASSET
+                  <Shield className="w-3 h-3 mr-1" /> PRIVATE SECURITY
                 </Badge>
               ) : (
               <Badge variant="secondary">Not Registered</Badge>
