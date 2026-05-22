@@ -6,12 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wallet, RefreshCw, AlertCircle, Check, X, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
+import { Wallet, RefreshCw, AlertCircle, Check, X, EyeOff, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ethers } from "ethers";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TokenCard, WalletToken } from "@/components/wallet/TokenCard";
+import { ImportTokenDialog } from "@/components/wallet/ImportTokenDialog";
 
 const HIDDEN_TOKENS_KEY = "wallet_hidden_tokens";
 
@@ -26,6 +27,8 @@ export default function WalletDashboardPage() {
     return stored ? new Set(JSON.parse(stored)) : new Set();
   });
   const [showHidden, setShowHidden] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importPrefill, setImportPrefill] = useState<{ address: string; name?: string; symbol?: string; decimals?: number } | null>(null);
 
   const toggleHideToken = (address: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -39,6 +42,16 @@ export default function WalletDashboardPage() {
     }
     setHiddenTokens(newHidden);
     localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify([...newHidden]));
+  };
+
+  const openImport = (token?: WalletToken, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setImportPrefill(
+      token
+        ? { address: token.contractAddress, name: token.name, symbol: token.symbol, decimals: token.decimals }
+        : null
+    );
+    setImportOpen(true);
   };
 
   const scanWalletTokens = async () => {
@@ -138,15 +151,21 @@ export default function WalletDashboardPage() {
             </p>
           </div>
           {wallet && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={scanWalletTokens}
-              disabled={loading}
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-              Scan Wallet
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => openImport()}>
+                <Plus className="w-4 h-4 mr-2" />
+                Import token
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={scanWalletTokens}
+                disabled={loading}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+                Scan Wallet
+              </Button>
+            </div>
           )}
         </div>
 
@@ -223,7 +242,12 @@ export default function WalletDashboardPage() {
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {unregisteredTokens.map((token) => (
-                    <TokenCard key={token.contractAddress} token={token} onHide={toggleHideToken} />
+                    <TokenCard
+                      key={token.contractAddress}
+                      token={token}
+                      onHide={toggleHideToken}
+                      onImport={(t, e) => openImport(t, e)}
+                    />
                   ))}
                 </div>
               </div>
@@ -243,7 +267,13 @@ export default function WalletDashboardPage() {
                 <CollapsibleContent className="mt-4">
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {hiddenTokensList.map((token) => (
-                      <TokenCard key={token.contractAddress} token={token} onHide={toggleHideToken} isHidden />
+                      <TokenCard
+                        key={token.contractAddress}
+                        token={token}
+                        onHide={toggleHideToken}
+                        onImport={(t, e) => openImport(t, e)}
+                        isHidden
+                      />
                     ))}
                   </div>
                 </CollapsibleContent>
@@ -251,6 +281,13 @@ export default function WalletDashboardPage() {
             )}
           </div>
         )}
+        <ImportTokenDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          walletAddress={wallet?.address ?? null}
+          prefill={importPrefill}
+          onImported={scanWalletTokens}
+        />
       </div>
     </AppLayout>
   );
