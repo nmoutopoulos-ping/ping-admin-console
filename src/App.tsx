@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { WalletProvider } from "@/contexts/WalletContext";
 import Index from "./pages/Index";
-import FiatTokensPage from "./pages/FiatTokensPage";
 import AssetTokensPage from "./pages/AssetTokensPage";
 import RequestsPage from "./pages/RequestsPage";
 import WalletDashboardPage from "./pages/WalletDashboardPage";
@@ -31,9 +30,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/wallet" element={<WalletDashboardPage />} />
             <Route path="/wallet/:contractAddress" element={<WalletTokenDetailPage />} />
-            <Route path="/fiat-tokens" element={<FiatTokensPage />} />
             <Route path="/asset-tokens" element={<AssetTokensPage />} />
-            <Route path="/tokens" element={<Navigate to="/fiat-tokens" replace />} />
+            <Route path="/tokens" element={<Navigate to="/asset-tokens" replace />} />
             <Route path="/requests" element={<RequestsPage />} />
             <Route path="/launch" element={<LaunchTokenPage />} />
             <Route path="*" element={<NotFound />} />
