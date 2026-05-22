@@ -26,7 +26,6 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
 
-  const isAsset = contract?.type === "asset";
   const canLoad = !!contract;
 
   const loadData = useCallback(async () => {
@@ -41,20 +40,13 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
         getContractOwner(contract),
       ];
       
-      // Only fetch holders for asset tokens (fiat contracts don't have this function)
-      if (isAsset) {
-        promises.push(getHoldersWithBalances(contract));
-      }
+      promises.push(getHoldersWithBalances(contract));
 
       const results = await Promise.all(promises);
       setTokenInfo(results[0]);
       setOwner(results[1]);
-      
-      if (isAsset) {
-        setHolders(results[2]);
-      } else {
-        setHolders(null);
-      }
+
+      setHolders(results[2]);
       
       setLastUpdated(new Date());
     } catch (err) {
@@ -62,7 +54,7 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
     } finally {
       setLoading(false);
     }
-  }, [contract, isAsset]);
+  }, [contract]);
 
   useEffect(() => {
     if (canLoad) {
@@ -118,9 +110,7 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
                 <Badge variant="outline" className="font-mono">
                   {tokenInfo.symbol}
                 </Badge>
-                <Badge className={isAsset ? "badge-asset" : "badge-fiat"}>
-                  {isAsset ? "Asset" : "Fiat"}
-                </Badge>
+                <Badge className="badge-asset">Asset</Badge>
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <a 
@@ -157,7 +147,7 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard 
             label="Total Supply" 
-            value={`${!isAsset ? "$ " : ""}${parseFloat(tokenInfo.totalSupplyFormatted.replace(/,/g, '')).toLocaleString()}`} 
+            value={parseFloat(tokenInfo.totalSupplyFormatted.replace(/,/g, '')).toLocaleString()} 
             highlight 
           />
           <StatCard label="Decimals" value={tokenInfo.decimals.toString()} />
