@@ -141,7 +141,7 @@ export default function WalletTokenDetailPage() {
           registeredId: registeredContract?.id,
         });
 
-        if (registeredContract?.type === 'asset') {
+        if (registeredContract) {
           loadHolders(registeredContract, decimals, totalSupplyFormatted);
         }
       } catch (err) {
