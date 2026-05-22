@@ -8,8 +8,7 @@ interface Props {
   onChange: (t: TokenType) => void;
 }
 
-const options: { id: TokenType; title: string; desc: string; icon: typeof Banknote }[] = [
-  { id: "fiat", title: "Fiat / Stablecoin", desc: "18 decimals · currency-like token", icon: Banknote },
+const options: { id: TokenType; title: string; desc: string; icon: typeof Building2 }[] = [
   { id: "asset", title: "Asset / Security", desc: "0 decimals · whole-unit shares", icon: Building2 },
 ];
 
