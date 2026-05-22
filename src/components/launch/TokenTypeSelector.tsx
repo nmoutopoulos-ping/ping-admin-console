@@ -9,7 +9,7 @@ interface Props {
 }
 
 const options: { id: TokenType; title: string; desc: string; icon: typeof Building2 }[] = [
-  { id: "asset", title: "Asset / Security", desc: "0 decimals · whole-unit shares", icon: Building2 },
+  { id: "asset", title: "Private Security", desc: "0 decimals - whole-unit shares", icon: Building2 },
 ];
 
 export function TokenTypeSelector({ value, onChange }: Props) {
