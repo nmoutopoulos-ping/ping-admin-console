@@ -1,7 +1,7 @@
 import { Building2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type TokenType = "fiat" | "asset";
+export type TokenType = "asset";
 
 interface Props {
   value: TokenType;

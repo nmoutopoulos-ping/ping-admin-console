@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Banknote, Building2, X, Copy, Globe, ChevronRight, EyeOff, Eye } from "lucide-react";
+import { Shield, X, Copy, Globe, ChevronRight, EyeOff, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { formatTokenBalance } from "@/lib/formatters";
 
@@ -14,7 +14,7 @@ export type WalletToken = {
   balance: string;
   balanceFormatted: string;
   isRegistered: boolean;
-  registeredType?: "fiat" | "asset";
+  registeredType?: "asset";
   registeredLabel?: string;
 };
 
@@ -56,12 +56,8 @@ export function TokenCard({ token, onHide, isHidden }: TokenCardProps) {
               </Button>
             )}
             {token.isRegistered ? (
-              <Badge variant={token.registeredType === "fiat" ? "default" : "outline"} className="text-xs shrink-0">
-                {token.registeredType === "fiat" ? (
-                  <><Banknote className="w-3 h-3 mr-1" /> FIAT</>
-                ) : (
-                  <><Building2 className="w-3 h-3 mr-1" /> ASSET</>
-                )}
+              <Badge variant="outline" className="text-xs shrink-0">
+                <Shield className="w-3 h-3 mr-1" /> PRIVATE SECURITY
               </Badge>
             ) : (
               <Badge variant="secondary" className="text-xs shrink-0">

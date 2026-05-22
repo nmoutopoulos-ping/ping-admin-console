@@ -8,7 +8,7 @@ import { LaunchReviewStep } from "@/components/launch/LaunchReviewStep";
 import { LaunchDeployStep } from "@/components/launch/LaunchDeployStep";
 
 export type TokenLaunchConfig = {
-  type: "fiat" | "asset";
+  type: "asset";
   name: string;
   symbol: string;
   decimals: number;

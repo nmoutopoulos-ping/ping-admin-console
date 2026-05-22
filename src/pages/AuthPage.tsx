@@ -24,7 +24,7 @@ export default function AuthPage() {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        navigate("/fiat-tokens");
+        navigate("/asset-tokens");
       }
     };
     checkAuth();
@@ -47,7 +47,7 @@ export default function AuthPage() {
       toast.error(error.message);
     } else {
       toast.success("Signed in successfully!");
-      navigate("/fiat-tokens");
+      navigate("/asset-tokens");
     }
   };
 

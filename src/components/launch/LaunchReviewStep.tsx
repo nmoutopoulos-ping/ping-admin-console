@@ -16,7 +16,7 @@ export function LaunchReviewStep({ config, onBack, onDeploy }: Props) {
   const rows: [string, string][] = [
     ["Token name", config.name],
     ["Symbol", config.symbol],
-    ["Type", config.type === "fiat" ? "Fiat / Stablecoin" : "Asset / Security"],
+    ["Type", "Private Security"],
     ["Decimals", String(config.decimals)],
     ["Initial supply", config.initialSupply],
     ["Owner", wallet?.address ?? "—"],
