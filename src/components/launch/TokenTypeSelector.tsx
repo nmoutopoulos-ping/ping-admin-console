@@ -1,4 +1,4 @@
-import { Banknote, Building2 } from "lucide-react";
+import { Building2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type TokenType = "fiat" | "asset";
@@ -42,6 +42,20 @@ export function TokenTypeSelector({ value, onChange }: Props) {
           </button>
         );
       })}
+      <div
+        aria-disabled
+        className="text-left p-4 rounded-xl border border-dashed border-border bg-muted/30 opacity-60 cursor-not-allowed"
+      >
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-muted text-muted-foreground">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-semibold text-sm text-muted-foreground">More types coming soon</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Additional token templates</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
