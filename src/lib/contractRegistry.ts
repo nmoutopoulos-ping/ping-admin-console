@@ -29,7 +29,7 @@ const OWNABLE_ABI: string[] = [
   "function burn(address from, uint256 amount)",
 ];
 
-// Full ERC20 ABI for fiat tokens
+// Full ERC20 ABI (base + ownable/mintable/burnable)
 export const ERC20_ABI: string[] = [...BASE_ERC20_ABI, ...OWNABLE_ABI];
 
 // Extended ABI for asset tokens with holder tracking
