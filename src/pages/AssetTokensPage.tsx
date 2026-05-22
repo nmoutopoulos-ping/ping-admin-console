@@ -46,7 +46,7 @@ export default function AssetTokensPage() {
 
         {!loading && !error && assetContracts.length === 0 && (
           <div className="p-12 text-center text-muted-foreground border border-dashed border-border/50 rounded-xl">
-            No asset tokens found
+            No private security tokens found
           </div>
         )}
 
