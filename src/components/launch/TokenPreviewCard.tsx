@@ -16,7 +16,7 @@ export function TokenPreviewCard({ config }: { config: TokenLaunchConfig }) {
               {config.symbol || "—"}
             </span>
             <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-              {config.type}
+              Private Security
             </Badge>
           </div>
           <div className="text-xs text-muted-foreground mt-1 flex gap-4">
