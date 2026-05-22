@@ -18,14 +18,17 @@ export function useContracts() {
 
       if (fetchError) throw fetchError;
 
-      const mapped: TrackedContract[] = (data || []).map((row) => ({
-        id: row.id,
-        label: row.label,
-        address: row.address,
-        type: "asset",
-        decimals: row.decimals,
-        abi: ASSET_TOKEN_ABI,
-      }));
+      const mapped: TrackedContract[] = (data || []).map((row) => {
+        const type = (row.type === "fiat" ? "fiat" : "asset") as "asset" | "fiat";
+        return {
+          id: row.id,
+          label: row.label,
+          address: row.address,
+          type,
+          decimals: row.decimals,
+          abi: type === "asset" ? ASSET_TOKEN_ABI : ERC20_ABI,
+        };
+      });
 
       setContracts(mapped);
     } catch (err) {

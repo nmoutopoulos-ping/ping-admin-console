@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Shield, X, Copy, Globe, ChevronRight, EyeOff, Eye } from "lucide-react";
+import { Shield, X, Copy, Globe, ChevronRight, EyeOff, Eye, Download } from "lucide-react";
 import { toast } from "sonner";
 import { formatTokenBalance } from "@/lib/formatters";
 
@@ -14,7 +14,7 @@ export type WalletToken = {
   balance: string;
   balanceFormatted: string;
   isRegistered: boolean;
-  registeredType?: "asset";
+  registeredType?: "asset" | "fiat";
   registeredLabel?: string;
 };
 
@@ -22,9 +22,10 @@ interface TokenCardProps {
   token: WalletToken;
   onHide?: (address: string, e: React.MouseEvent) => void;
   isHidden?: boolean;
+  onImport?: (token: WalletToken, e: React.MouseEvent) => void;
 }
 
-export function TokenCard({ token, onHide, isHidden }: TokenCardProps) {
+export function TokenCard({ token, onHide, isHidden, onImport }: TokenCardProps) {
   const navigate = useNavigate();
 
   const copyAddress = (e: React.MouseEvent) => {
@@ -44,6 +45,17 @@ export function TokenCard({ token, onHide, isHidden }: TokenCardProps) {
             {token.isRegistered ? token.registeredLabel : token.name}
           </CardTitle>
           <div className="flex items-center gap-1">
+            {!token.isRegistered && onImport && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 shrink-0"
+                onClick={(e) => onImport(token, e)}
+                title="Import token"
+              >
+                <Download className="w-3 h-3" />
+              </Button>
+            )}
             {!token.isRegistered && onHide && (
               <Button
                 variant="ghost"
