@@ -110,7 +110,7 @@ export function TokenOverview({ contract, isWalletConnected }: TokenOverviewProp
                 <Badge variant="outline" className="font-mono">
                   {tokenInfo.symbol}
                 </Badge>
-                <Badge className="badge-asset">Asset</Badge>
+                <Badge className="badge-asset">Private Security</Badge>
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <a 
