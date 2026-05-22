@@ -239,12 +239,8 @@ export default function WalletTokenDetailPage() {
                 {token.isRegistered ? token.registeredLabel : token.name}
               </h1>
               {token.isRegistered ? (
-                <Badge variant={token.registeredType === "fiat" ? "default" : "outline"}>
-                  {token.registeredType === "fiat" ? (
-                    <><Banknote className="w-3 h-3 mr-1" /> FIAT</>
-                  ) : (
-                    <><Building2 className="w-3 h-3 mr-1" /> ASSET</>
-                  )}
+                <Badge variant="outline">
+                  <Building2 className="w-3 h-3 mr-1" /> ASSET
                 </Badge>
               ) : (
               <Badge variant="secondary">Not Registered</Badge>
@@ -257,7 +253,7 @@ export default function WalletTokenDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(token.registeredType === "fiat" ? "/fiat-tokens" : "/asset-tokens")}
+              onClick={() => navigate("/asset-tokens")}
               className="flex items-center gap-2"
             >
               <Wrench className="w-4 h-4" />
