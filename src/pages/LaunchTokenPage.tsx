@@ -42,7 +42,7 @@ export default function LaunchTokenPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Launch a token</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Deploy your own ERC20 token to Sepolia in minutes.
+              Deploy your own private security token to Sepolia in minutes.
             </p>
           </div>
         </div>
