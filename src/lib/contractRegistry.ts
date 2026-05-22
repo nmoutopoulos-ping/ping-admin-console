@@ -2,7 +2,7 @@ export type TrackedContract = {
   id: string;
   label: string;
   address: string;
-  type: "fiat" | "asset";
+  type: "asset";
   decimals: number;
   abi: string[];
 };

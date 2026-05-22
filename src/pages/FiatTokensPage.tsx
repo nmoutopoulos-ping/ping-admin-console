@@ -16,7 +16,7 @@ export default function FiatTokensPage() {
   const { contracts, loading, error } = useContracts();
   const { isOwner } = useIsContractOwner(selectedContract, wallet?.address ?? null);
 
-  const fiatContracts = contracts.filter(c => c.type === "fiat");
+  const fiatContracts: typeof contracts = [];
 
   useEffect(() => {
     if (fiatContracts.length > 0 && !selectedContract) {
