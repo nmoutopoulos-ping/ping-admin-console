@@ -27,7 +27,7 @@ type TokenDetail = {
   balanceFormatted: string;
   owner: string | null;
   isRegistered: boolean;
-  registeredType?: "fiat" | "asset";
+  registeredType?: "asset";
   registeredLabel?: string;
   registeredId?: string;
 };
@@ -136,7 +136,7 @@ export default function WalletTokenDetailPage() {
           balanceFormatted,
           owner,
           isRegistered: !!registeredContract,
-          registeredType: registeredContract?.type as "fiat" | "asset" | undefined,
+          registeredType: registeredContract?.type as "asset" | undefined,
           registeredLabel: registeredContract?.label,
           registeredId: registeredContract?.id,
         });
