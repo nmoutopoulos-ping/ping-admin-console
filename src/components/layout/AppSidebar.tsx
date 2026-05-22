@@ -1,4 +1,4 @@
-import { Zap, Building2, Inbox, Wallet, Rocket } from "lucide-react";
+import { Zap, Shield, Inbox, Wallet, Rocket } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -20,7 +20,7 @@ import {
 
 const navItems = [
   { title: "My Wallet", url: "/wallet", icon: Wallet },
-  { title: "Asset Tokens", url: "/asset-tokens", icon: Building2 },
+  { title: "Private Securities", url: "/asset-tokens", icon: Shield },
   { title: "Requests", url: "/requests", icon: Inbox },
   { title: "Launch Token", url: "/launch", icon: Rocket },
 ];
