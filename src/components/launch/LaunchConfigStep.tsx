@@ -38,7 +38,7 @@ export function LaunchConfigStep({ config, setConfig, onNext }: Props) {
           <Label htmlFor="t-name">Token name</Label>
           <Input
             id="t-name"
-            placeholder="e.g. Wyoming USD"
+            placeholder="e.g. 131 5th Avenue"
             value={config.name}
             onChange={(e) => setConfig({ ...config, name: e.target.value })}
           />
@@ -47,7 +47,7 @@ export function LaunchConfigStep({ config, setConfig, onNext }: Props) {
           <Label htmlFor="t-sym">Token symbol</Label>
           <Input
             id="t-sym"
-            placeholder="e.g. WYUSD"
+            placeholder="e.g. 1315TH"
             value={config.symbol}
             maxLength={10}
             onChange={(e) =>
