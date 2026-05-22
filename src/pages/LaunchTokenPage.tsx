@@ -16,10 +16,10 @@ export type TokenLaunchConfig = {
 };
 
 const defaultConfig: TokenLaunchConfig = {
-  type: "fiat",
+  type: "asset",
   name: "",
   symbol: "",
-  decimals: 18,
+  decimals: 0,
   initialSupply: "",
 };
 
