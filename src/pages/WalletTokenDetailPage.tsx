@@ -360,7 +360,7 @@ export default function WalletTokenDetailPage() {
         </Card>
 
         {/* Holders Table (Asset Tokens Only) */}
-        {token.registeredType === 'asset' && (
+        {token.isRegistered && (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
