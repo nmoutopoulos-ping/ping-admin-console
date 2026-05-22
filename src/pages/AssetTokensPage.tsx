@@ -29,7 +29,7 @@ export default function AssetTokensPage() {
       <div className="max-w-5xl mx-auto space-y-8">
         <header className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">Private Security Tokens</h1>
-          <p className="text-muted-foreground">Manage real-world asset backed tokens</p>
+          <p className="text-muted-foreground">Manage private security tokens</p>
         </header>
 
         {loading && (
